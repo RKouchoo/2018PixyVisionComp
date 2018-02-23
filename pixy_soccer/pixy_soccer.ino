@@ -7,13 +7,15 @@
   \____/\_|   \/   \/    \____/\___/\_| \_| \____/\___/ \___/  \_/   \____/\_| \_\____/\_| |_/\_| \_/\____/\_| \_|\____/
 
   Author: @RKouchoo
+  
 
 */
 
+#include <Ardunio.h>
 #include <SPI.h>
 #include <Pixy.h>
 
-Pixy pixy;
+Pixy pixy; // Create a pixy object
 
 /**
  * Pixy variables
@@ -38,7 +40,29 @@ int enable1 = 5;                //enable1 on Pin D5
 int motor2 = 7;                 //motor2 on Pin D7
 int enable2 = 6;                //enable2 on Pin D6
 int Speed = 70;                 //speed for motor
-static int i = 0;
+
+final static int MOTOR_ONE[2] = {1, 2};
+final static int MOTOR_TWO[2] = {1, 2};
+final static int MOTOR_THREE[2] = {1, 2};
+final static int MOTOR_FOUR[2] = {1, 2};
+
+final static int MOTOR_INDEX_LIST[MOTOR_ONE][MOTOR_TWO][MOTOR_THREE][MOTOR_FOUR]; // No way this works..
+
+#define i 0 // useless variable that needs to be changed.
+
+/**
+* Camera object ID's to track
+*/
+
+#define CMYK_CYAN_GOAL 2
+#define CMYK_YELLOW_GOAL 3
+#define CMYK_ORGANGE_BALL 1
+
+static enum cameraObject {
+   CMYK_CYAN_GOAL,
+   CMYK_YELLOW_GOAL,
+   CMYK_ORANGE_BALL
+}
 
 enum thisMotorDirection {
   MOTOR_FORWARD,
@@ -50,6 +74,10 @@ enum thisMotorDirection {
 
 void setMotorDirection(thisMotorDirection thisDirection) {
   
+}
+
+void initMotorConfig(int motorList[][][][]) {
+   
 }
 
 void backward()//backward
