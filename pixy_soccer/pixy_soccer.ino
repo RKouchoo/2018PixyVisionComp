@@ -5,179 +5,217 @@
   `--. \  __/ /   \    | |     | | |    / | |   | | | | | |   | |   | ___ \    /|  __||  _  ||    \ |  __||    /  `--. \
   /\__/ / |   / /^\ \   | \__/\_| |_| |\ \ | \__/\ |_| |_| |_  | |   | |_/ / |\ \| |___| | | || |\  \| |___| |\ \ /\__/ /
   \____/\_|   \/   \/    \____/\___/\_| \_| \____/\___/ \___/  \_/   \____/\_| \_\____/\_| |_/\_| \_/\____/\_| \_|\____/
-
   Author: @RKouchoo
-  
 
 */
 
-#include <Ardunio.h>
 #include <SPI.h>
 #include <Pixy.h>
 
 Pixy pixy; // Create a pixy object
 
 /**
- * Pixy variables
- */
-int signature = 0;
-int x = 0;                      //positon x axis
-int y = 0;                      //position y axis
-unsigned int width = 0;         //object's width
-unsigned int height = 0;        //object's height
-unsigned int area = 0;
-unsigned int newarea = 0;
+   Pixy variables
+*/
+int object_signature = 0;
+int object_x = 0;                      //positon x axis
+int object_y = 0;                      //position y axis
+unsigned int object_width = 0;         //object's width
+unsigned int object_height = 0;        //object's height
+unsigned int object_area = 0;
+unsigned int object_newArea = 0;
 int Xmin = 70;                  //min x position
 int Xmax = 200;                 //max x position
 int maxArea = 0;
 int minArea = 0;
 
 /**
- * Hardware variables
- */
+   Hardware variables
+*/
 int motor1 = 4;                 //motor1 on Pin D4
 int enable1 = 5;                //enable1 on Pin D5
 int motor2 = 7;                 //motor2 on Pin D7
 int enable2 = 6;                //enable2 on Pin D6
 int Speed = 70;                 //speed for motor
 
-final static int MOTOR_ONE[2] = {1, 2};
-final static int MOTOR_TWO[2] = {1, 2};
-final static int MOTOR_THREE[2] = {1, 2};
-final static int MOTOR_FOUR[2] = {1, 2};
+static unsigned int MOTOR_ONE[2] = {1, 2}; // forward and backwards controller channels `.
+static unsigned int MOTOR_TWO[2] = {1, 2};
+static unsigned int MOTOR_THREE[2] = {1, 2};
+static unsigned int MOTOR_FOUR[2] = {1, 2};
 
-final static int MOTOR_INDEX_LIST[MOTOR_ONE][MOTOR_TWO][MOTOR_THREE][MOTOR_FOUR]; // No way this works..
+static unsigned int MOTOR_ONE_PWM = 1;
+static unsigned int MOTOR_TWO_PWM = 1;
+static unsigned int MOTOR_THREE_PWM = 1;
+static unsigned int MOTOR_FOUR_PWM = 1;
 
-#define i 0 // useless variable that needs to be changed.
+/*
+ * The arrays that handle the
+ * 
+  */
+
+static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
+static int motors[2][4] = { {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]}, {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]} };
 
 /**
-* Camera object ID's to track
+  Camera object ID's to track
 */
 
-#define CMYK_CYAN_GOAL 2
-#define CMYK_YELLOW_GOAL 3
-#define CMYK_ORGANGE_BALL 1
+#define CMYK_CYAN_GOAL_ID 2
+#define CMYK_YELLOW_GOAL_ID 3
+#define CMYK_ORGANGE_BALL_ID 1
 
-static enum cameraObject {
-   CMYK_CYAN_GOAL,
-   CMYK_YELLOW_GOAL,
-   CMYK_ORANGE_BALL
-}
+enum cameraTrackingObject {
+  CMYK_CYAN_GOAL,
+  CMYK_YELLOW_GOAL,
+  CMYK_ORANGE_BALL
+};
 
 enum thisMotorDirection {
   MOTOR_FORWARD,
   MOTOR_BACKWARD,
-  MOTOR_STRAFE_LEFT,
-  MOTOR_STRAFE_RIGHT,
-  MOTOR_STOPPED
+  MOTOR_STOP
 };
 
-void setMotorDirection(thisMotorDirection thisDirection) {
+enum thisRobotDirection {
+  ROBOT_FORWARD,
+  ROBOT_BACKWARD,
+  ROBOT_LEFT,
+  ROBOT_STRAFE_LEFT,
+  ROBOT_RIGHT,
+  ROBOT_STRAFE_RIGHT,
+  ROBOT_STOP
+};
+
+/*
+ * Takes an array of motor IDS and then creates all of the motor outputs
+ */
+void initMotorConfig(int motorList[2][4]) {
+  static int firstLength = 2;
+  static int secondLength = 4;
+  for (int i = 0; i < firstLength; i++) {
+    for (int j = 0; j < secondLength; j++) {
+      if (!motorList[i][j]) {
+        pinMode(OUTPUT, motorList[i][j]);
+      }
+    }
+  }
+}
+
+void initMotorPwmConfig(int pwmChannel[4]) {
+  for (int i = 0; i < 4; i ++) {
+    pinMode(OUTPUT, pwmChannel[i]);
+  }
+}
+
+void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
+  switch (motorDirection) {
+    
+  
+    case MOTOR_FORWARD:
+      digitalWrite(motorId[1], LOW);
+      digitalWrite(motorId[0], HIGH);
+    break;
+
+    case MOTOR_BACKWARD:
+      digitalWrite(motorId[0], LOW);
+      digitalWrite(motorId[1], HIGH);
+    break;
+
+    case MOTOR_STOP:
+      digitalWrite(motorId[0], LOW);
+      digitalWrite(motorId[1], LOW);
+    break;
+
+    default:
+      digitalWrite(motorId[0], LOW);
+      digitalWrite(motorId[1], LOW);
+  }
+}
+void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
+  for (int i = 0; i < 4; i ++) {
+    analogWrite(pwmChannel[i], motorSpeed);
+  }
+}
+
+/*
+ * Sets the robot direction and speed
+ */
+void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
+ 
+  switch (robotDirection) {
+    case ROBOT_FORWARD:
+      // Move forward
+    break;
+
+    case ROBOT_BACKWARD:
+      // Move backward
+    break;
+
+   case ROBOT_LEFT:
+      // move left
+    break;
+
+    case ROBOT_STRAFE_LEFT:
+      // Strafe left
+    break;
+  
+    case ROBOT_RIGHT:
+      // move right
+    break;
+    
+    case ROBOT_STRAFE_RIGHT:
+      // Strafe right
+    break;
+
+    case ROBOT_STOP:
+      // Stop the robot
+    break;
+  }
   
 }
 
-void initMotorConfig(int motorList[][][][]) {
-   
-}
-
-void backward()//backward
-{
-  digitalWrite(motor1, LOW);
-  digitalWrite(motor2, LOW);
-  analogWrite(enable1, Speed);
-  analogWrite(enable2, Speed);
-}
-
-void forward()//forward
-{
-  digitalWrite(motor1, HIGH);
-  digitalWrite(motor2, HIGH);
-  analogWrite(enable1, Speed);
-  analogWrite(enable2, Speed);
-}
-
-void right()//turn right
-{
-  digitalWrite(motor1, HIGH);
-  digitalWrite(motor2, LOW);
-  analogWrite(enable1, Speed);
-  analogWrite(enable2, Speed);
-}
-
-void left()//turn left
-{
-  digitalWrite(motor1, LOW);
-  digitalWrite(motor2, HIGH);
-  analogWrite(enable1, Speed);
-  analogWrite(enable2, Speed);
-}
-
-void Stop() {
-  digitalWrite(enable1, LOW);
-  digitalWrite(enable2, LOW);
-}
-
 void scanObjects() {
+  int i = 1;
   uint16_t blocks;
   blocks = pixy.getBlocks();  //receive data from pixy
-  signature = pixy.blocks[i].signature;    //get object's signature
-  x = pixy.blocks[i].x;                    //get x position
-  y = pixy.blocks[i].y;                    //get y position
-  width = pixy.blocks[i].width;            //get width
-  height = pixy.blocks[i].height;          //get height
+  object_signature = pixy.blocks[i].signature;    //get object's signature
+  object_x = pixy.blocks[i].x;                    //get x position
+  object_y = pixy.blocks[i].y;                    //get y position
+  object_width = pixy.blocks[i].width;            //get width
+  object_height = pixy.blocks[i].height;          //get height
 }
 
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
-  Stop();
+  initMotorConfig(motors);
+  initMotorPwmConfig(pwms);
   pixy.init();
+  setRobotDirection(ROBOT_STOP, LOW);
 }
 
-void loop()
-{
-  while (millis() < 5000)
-  {
-    scanObjects();
-    area = width * height; //calculate the object area
-    maxArea = area + 1000;
-    minArea = area - 1000;
-  }
-
+void loop() {
+  
   scanObjects();
-
-  if (signature == 2) //looking for signature 2
-  {
-    newarea = width * height; //calculate the object area
-
-    if (x < Xmin)//turn left if x position < max x position
-    {
-      left();
+  
+  object_area = object_width * object_height; //calculate the object area
+  maxArea = object_area + 1000;
+  minArea = object_area - 1000;
+  
+  if (object_signature == CMYK_ORANGE_BALL) {
+    object_newArea = object_width * object_height; //calculate the object area
+    if (object_x < Xmin) { //turn left if x position < max x position
+      setRobotDirection(ROBOT_STRAFE_LEFT, 200);
+    } else if (object_x > Xmax) { //turn right if x position > max x position
+      setRobotDirection(ROBOT_STRAFE_RIGHT, 200);
+    } else if (object_newArea < minArea) { //go forward if object too small
+      setRobotDirection(ROBOT_FORWARD, 200);
+    } else if (object_newArea > maxArea) { //go backward if object too big
+      setRobotDirection(ROBOT_BACKWARD, 200);
+    } else {
+      setRobotDirection(ROBOT_STOP, LOW);
     }
-    else if (x > Xmax) //turn right if x position > max x position
-    {
-      right();
-    }
-    else if (newarea < minArea) //go forward if object too small
-    {
-      forward();
-    }
-    else if (newarea > maxArea) //go backward if object too big
-    {
-      backward();
-    }
-
-    //else stop
-    else
-    {
-      Stop();
-    }
-  }
-  else
-  {
-    Stop();
+  } else {
+      setRobotDirection(ROBOT_STOP, LOW);
   }
 }
-
-
