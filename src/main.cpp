@@ -63,11 +63,11 @@ static int MOTOR_TWO_PWM = 1;
 static int MOTOR_THREE_PWM = 1;
 static int MOTOR_FOUR_PWM = 1;
 
-static int LIGHT_SENSOR_BACK = 0;
 static int LIGHT_SENSOR_LEFT = 0;
 static int LIGHT_SENSOR_RIGHT = 0;
+static int LIGHT_SENSOR_BACK = 0;
 
-static int lightSensors[3] = {LIGHT_SENSOR_BACK, LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT};
+static int lightSensors[3] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSOR_BACK};
 
 /*
  * The arrays that collect the data for automated setup routines.
@@ -145,6 +145,13 @@ void initLightSensorConfig(int sensors[3]) {
   for (int i = 0; i < 3; i ++) {
     pinMode(INPUT, sensors[i]);
   }
+}
+
+/*
+ * returns the current value of the selected sensor. 
+ */
+double getLightSensorValue(int sensor) {
+  return analogRead(sensor);
 }
 
 /*
@@ -300,7 +307,7 @@ switch (object) {
   break;
 
 }
-  // CLANG: why is ths an error
+  // CLANG: why is ths an error!?
   uint16_t blocks = pixy.getBlocks();                       // Get the data from the pixy.
   objectChoiceSignature = pixy.blocks[objectId].signature;  // get object's signature
   objectXPos = pixy.blocks[objectId].x;                     // get x position
