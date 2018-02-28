@@ -170,12 +170,24 @@ double getLightSensorValue(int sensor) {
 thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
   if (sensorValue <= FEILD_BLACK_LINE_RATIO) {
     return FEILD_BLACK_LINE;
+
   } else if (sensorValue <= FEILD_WHITE_LINE_RATIO) {
     return FEILD_WHITE_LINE;
+
   } else if (sensorValue <= FEILD_GREEN_SURFACE_RATIO) {
     return FEILD_GREEN_SURFACE;
+
   } else {
     return FEILD_GREEN_SURFACE;
+  }
+}
+
+/*
+* Routine for setting the speed for all of the motors on the robot.
+*/
+void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
+  for (int i = 0; i < 4; i ++) {
+    analogWrite(pwmChannel[i], motorSpeed);
   }
 }
 
@@ -183,6 +195,8 @@ thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
 * hardware ish level of code development
 */
 void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
+  setRobotSpeed(motorSpeed, pwms);
+
   switch (motorDirection) {
     case MOTOR_FORWARD:
       digitalWrite(motorId[1], LOW);
@@ -202,15 +216,6 @@ void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double
     default:
       digitalWrite(motorId[0], LOW);
       digitalWrite(motorId[1], LOW);
-  }
-}
-
-/*
-* Routine for setting the speed for all of the motors on the robot.
-*/
-void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
-  for (int i = 0; i < 4; i ++) {
-    analogWrite(pwmChannel[i], motorSpeed);
   }
 }
 
