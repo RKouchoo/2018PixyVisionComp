@@ -9,6 +9,17 @@
 
 */
 
+// Robot motor layout diagram
+
+/*
+    3         4
+
+    r        l
+
+    2  mouth  1
+*/
+
+#include <Arduino.h>
 #include <SPI.h>
 #include <Pixy.h>
 
@@ -16,19 +27,19 @@
 
 Pixy pixy; // Create a pixy objec
 
-/**
-   Pixy variables
+/*
+* Pixy variables
 */
 int objectChoiceSignature = 0;
 
-unsigned int objectXPos = 0;                      //positon x axis
-unsigned int objectYPos = 0;                      //position y axis
+unsigned int objectXPos = 0;           //positon x axis
+unsigned int objectYPos = 0;           //position y axis
 unsigned int object_width = 0;         //object's width
 unsigned int object_height = 0;        //object's height
 unsigned int object_area = 0;
 unsigned int object_newArea = 0;
-unsigned int Xmin = 70;                  //min x position
-unsigned int Xmax = 200;                 //max x position
+unsigned int Xmin = 70;                //min x position
+unsigned int Xmax = 200;               //max x position
 unsigned int maxArea = 0;
 unsigned int minArea = 0;
 
@@ -49,7 +60,6 @@ static int MOTOR_FOUR_PWM = 1;
  * The arrays that collect the data for automated setup routines.
  *
  */
-
 static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
 static int motors[2][4] = { {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]}, {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]} };
 
@@ -98,7 +108,6 @@ void initMotorConfig(int motorList[2][4]) {
       }
     }
   }
-
 }
 
 /*
@@ -164,7 +173,10 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     case ROBOT_LEFT:
-      // move left
+      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
     case ROBOT_STRAFE_LEFT:
@@ -176,7 +188,10 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     case ROBOT_RIGHT:
-      // move right
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
     break;
 
     case ROBOT_STRAFE_RIGHT:
@@ -255,6 +270,8 @@ void setup() {
   setRobotDirection(ROBOT_STOP, 0);
 }
 
+
+// The main loop that the robot runs at ~100Hz
 void loop() {
 
   scanObjects(CMYK_ORANGE_BALL);
@@ -265,26 +282,19 @@ void loop() {
 
   // Check if the pixy has the proper object lock.
   if (objectChoiceSignature == CMYK_ORANGE_BALL) {
-
     // Calculate the new area for the ball that is being tracked.
     object_newArea = object_width * object_height; //calculate the object area
-
     if (objectXPos < Xmin) { //turn left if x position < max x position
       setRobotDirection(ROBOT_STRAFE_LEFT, 200);
-
     } else if (objectXPos > Xmax) { //turn right if x position > max x position
       setRobotDirection(ROBOT_STRAFE_RIGHT, 200);
-
     } else if (object_newArea < minArea) { //go forward if object too small
       setRobotDirection(ROBOT_FORWARD, 200);
-
     } else if (object_newArea > maxArea) { //go backward if object too big
       setRobotDirection(ROBOT_BACKWARD, 200);
-
     } else {
       setRobotDirection(ROBOT_STOP, LOW); // stop the robot if it has lost sight of the ball.
     }
-
   } else {
       setRobotDirection(ROBOT_STOP, LOW);
   }
