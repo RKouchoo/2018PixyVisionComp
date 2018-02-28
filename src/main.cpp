@@ -31,7 +31,7 @@
 
 #define SERIAL_BANDWIDTH 9600
 
-Pixy pixy; // Create a pixy objec
+Pixy pixy; // Create a pixy object
 
 /*
 * Pixy variables
