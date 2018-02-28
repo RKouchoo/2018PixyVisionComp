@@ -74,7 +74,10 @@ static int lightSensors[4] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSO
  * The arrays that collect the data for automated setup routines.
  */
 static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
-static int motors[2][4] = { {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]}, {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]} };
+static int motors[2][4] = {
+  {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]},  // forward channels
+  {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]}  // backward channels
+};
 
 /*
  * Camera object ID's to track
@@ -356,6 +359,37 @@ double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
   return map(div, 0, 1000, 0, 255);
 }
 
+void threadRunner() {
+    scanObjects(CMYK_ORANGE_BALL);
+
+    object_area = object_width * object_height; //calculate the object area
+    maxArea = object_area + 1000;
+    minArea = object_area - 1000;
+
+    // Check if the pixy has the proper object lock.
+    if (objectChoiceSignature == CMYK_ORANGE_BALL) {
+      object_newArea = object_width * object_height;  //calculate the object area
+
+      // calculate the speed for the robot
+      double speed = calculateRobotSpeed(object_newArea, maxArea);
+
+      if (objectXPos < Xmin) {                        // turn left if x position < max x position
+        setRobotDirection(ROBOT_STRAFE_LEFT, speed);
+      } else if (objectXPos > Xmax) {                 // turn right if x position > max x position
+        setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
+      } else if (object_newArea < minArea) {          // go forward if object too small
+        setRobotDirection(ROBOT_FORWARD, speed);
+      } else if (object_newArea > maxArea) {          // go backward if object too big
+        setRobotDirection(ROBOT_BACKWARD, speed);
+      } else {
+        setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
+      }
+    } else {
+        // Code to tell the other robot to step in, for now just look for the ball.
+        scanObjects(CMYK_ORANGE_BALL);
+    }
+}
+
 /*
 * The setup routine for the the robot code.
 */
@@ -376,33 +410,5 @@ void setup() {
 
 // The main loop that the robot runs at ~100Hz
 void loop() {
-
-  scanObjects(CMYK_ORANGE_BALL);
-
-  object_area = object_width * object_height; //calculate the object area
-  maxArea = object_area + 1000;
-  minArea = object_area - 1000;
-
-  // Check if the pixy has the proper object lock.
-  if (objectChoiceSignature == CMYK_ORANGE_BALL) {
-    object_newArea = object_width * object_height;  //calculate the object area
-
-    // calculate the speed for the robot
-    double speed = calculateRobotSpeed(object_newArea, maxArea);
-
-    if (objectXPos < Xmin) {                        // turn left if x position < max x position
-      setRobotDirection(ROBOT_STRAFE_LEFT, speed);
-    } else if (objectXPos > Xmax) {                 // turn right if x position > max x position
-      setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
-    } else if (object_newArea < minArea) {          // go forward if object too small
-      setRobotDirection(ROBOT_FORWARD, speed);
-    } else if (object_newArea > maxArea) {          // go backward if object too big
-      setRobotDirection(ROBOT_BACKWARD, speed);
-    } else {
-      setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
-    }
-  } else {
-      // Code to tell the other robot to step in, for now just look for the ball.
-      scanObjects(CMYK_ORANGE_BALL);
-  }
+  threadRunner();
 }
