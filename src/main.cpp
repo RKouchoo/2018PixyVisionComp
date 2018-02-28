@@ -83,13 +83,20 @@ enum thisMotorDirection {
 };
 
 enum thisRobotDirection {
+  // Basic movements
   ROBOT_FORWARD,
   ROBOT_BACKWARD,
-  ROBOT_LEFT,
+
+  // Left movements
+  ROBOT_CRAB_LEFT,
   ROBOT_STRAFE_LEFT,
+  ROBOT_STRAFE_LEFT_BACKWARD,
   ROBOT_ROTATE_LEFT,
-  ROBOT_RIGHT,
+
+  // Right movements
+  ROBOT_CRAB_RIGHT,
   ROBOT_STRAFE_RIGHT,
+  ROBOT_STRAFE_RIGHT_BACKWARD,
   ROBOT_ROTATE_RIGHT,
   ROBOT_STOP
 };
@@ -172,34 +179,64 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
       setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
-    case ROBOT_LEFT:
+    // Left movements
+
+    case ROBOT_CRAB_LEFT:
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
+    break;
+
+    case ROBOT_STRAFE_LEFT:
+      setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
+    break;
+
+    case ROBOT_STRAFE_LEFT_BACKWARD:
+      setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
+    break;
+
+    case ROBOT_ROTATE_LEFT:
       setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
       setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
       setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
-    case ROBOT_STRAFE_LEFT:
-      // Strafe left
+    // Right movements
+
+    case ROBOT_CRAB_RIGHT:
+      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
-    case ROBOT_ROTATE_LEFT:
-      // rotate left
+    case ROBOT_STRAFE_RIGHT:
+      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
     break;
 
-    case ROBOT_RIGHT:
+    case ROBOT_STRAFE_RIGHT_BACKWARD:
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
+    break;
+
+    case ROBOT_ROTATE_RIGHT:
       setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
       setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
       setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
-    break;
-
-    case ROBOT_STRAFE_RIGHT:
-      // Strafe right
-    break;
-
-    case ROBOT_ROTATE_RIGHT:
-      // rotate right
     break;
 
     case ROBOT_STOP:
