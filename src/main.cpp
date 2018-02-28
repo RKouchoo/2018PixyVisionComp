@@ -256,8 +256,8 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
 void scanObjects(cameraTrackingObject object) {
 int objectId;
 
+// Choose the object to track based on what is fed in from the loop.
 switch (object) {
-
   case CMYK_CYAN_GOAL:
     objectId = CMYK_CYAN_GOAL_ID;
   break;
@@ -289,8 +289,8 @@ switch (object) {
 * This needs to be fixed! should not work the first time!.
 */
 double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
-  int div = objectDistance / maxObjectDistance;
-  return map(div, 0, 1500, 0, 255);
+  int div = objectDistance / maxObjectDistance; // stupid. need to get the actual distance of the ball from the robot.
+  return map(div, 0, 1000, 0, 255);
 }
 
 /*
