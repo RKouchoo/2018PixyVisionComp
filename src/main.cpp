@@ -65,9 +65,10 @@ static int MOTOR_FOUR_PWM = 1;
 
 static int LIGHT_SENSOR_LEFT = 0;
 static int LIGHT_SENSOR_RIGHT = 0;
+static int LIGHT_SENSOR_FRONT = 0;
 static int LIGHT_SENSOR_BACK = 0;
 
-static int lightSensors[3] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSOR_BACK};
+static int lightSensors[4] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSOR_FRONT, LIGHT_SENSOR_BACK};
 
 /*
  * The arrays that collect the data for automated setup routines.
@@ -151,8 +152,8 @@ void initMotorPwmConfig(int pwmChannel[4]) {
 /*
 * routine to set up the sensor pins as an input.
 */
-void initLightSensorConfig(int sensors[3]) {
-  for (int i = 0; i < 3; i ++) {
+void initLightSensorConfig(int sensors[4]) {
+  for (int i = 0; i < 4; i ++) {
     pinMode(INPUT, sensors[i]);
   }
 }
