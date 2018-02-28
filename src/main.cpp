@@ -12,17 +12,15 @@
 
   Written for SPX robotics
 
-*/
+  Robot motor layout diagram
+  1, 2, 3, 4 are the corresponding motor names in the code.
 
-// Robot motor layout diagram
-// 1, 2, 3, 4 are the corresponding motor names in the code.
-
-/*
     3   back  4
 
   right      left
        / - \
     2  mouth  1
+
 */
 
 #include <Arduino.h>
@@ -144,8 +142,8 @@ void initMotorConfig(int motorList[2][4]) {
 }
 
 /*
-* configuration routine for pwm channels
-*/
+ * configuration routine for pwm channels
+ */
 void initMotorPwmConfig(int pwmChannel[4]) {
   for (int i = 0; i < 4; i ++) {
     pinMode(OUTPUT, pwmChannel[i]);
@@ -153,8 +151,8 @@ void initMotorPwmConfig(int pwmChannel[4]) {
 }
 
 /*
-* routine to set up the sensor pins as an input.
-*/
+ * routine to set up the sensor pins as an input.
+ */
 void initLightSensorConfig(int sensors[4]) {
   for (int i = 0; i < 4; i ++) {
     pinMode(INPUT, sensors[i]);
@@ -169,8 +167,8 @@ double getLightSensorValue(int sensor) {
 }
 
 /*
-* returns the found object below the robot.
-*/
+ * returns the found object below the robot.
+ */
 thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
   if (sensorValue <= FEILD_BLACK_LINE_RATIO) {
     return FEILD_BLACK_LINE;
@@ -187,8 +185,8 @@ thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
 }
 
 /*
-* Routine for setting the speed for all of the motors on the robot.
-*/
+ * Routine for setting the speed for all of the motors on the robot.
+ */
 void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
   for (int i = 0; i < 4; i ++) {
     analogWrite(pwmChannel[i], motorSpeed);
@@ -196,8 +194,8 @@ void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
 }
 
 /*
-* hardware ish level of code development
-*/
+ * hardware ish level of code development
+ */
 void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
   setRobotSpeed(motorSpeed, pwms);
 
@@ -245,8 +243,8 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     /*
-    * left movements
-    */
+     * left movements
+     */
     case ROBOT_CRAB_LEFT:
       setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
@@ -276,8 +274,8 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     /*
-    * right movements
-    */
+     * right movements
+     */
     case ROBOT_CRAB_RIGHT:
       setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
@@ -317,8 +315,8 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
 }
 
 /*
-* gets the pixy to update what objects are around it.
-*/
+ * gets the pixy to update what objects are around it.
+ */
 void scanObjects(cameraTrackingObject object) {
 int objectId;
 
@@ -341,7 +339,7 @@ switch (object) {
   break;
 
 }
-  // CLANG: why is ths an error!?
+  // CLANG: why is ths an error!? v
   uint16_t blocks = pixy.getBlocks();                       // Get the data from the pixy.
   objectChoiceSignature = pixy.blocks[objectId].signature;  // get object's signature
   objectXPos = pixy.blocks[objectId].x;                     // get x position
@@ -351,9 +349,9 @@ switch (object) {
 }
 
 /*
-* Scales the speed of the motors based on object Distance
-* This needs to be fixed! should not work the first time!.
-*/
+ * Scales the speed of the motors based on object Distance
+ * This needs to be fixed! should not work the first time!.
+ */
 double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
   int div = objectDistance / maxObjectDistance; // stupid. need to get the actual distance of the ball from the robot.
   return map(div, 0, 1000, 0, 255);
@@ -391,8 +389,8 @@ void threadRunner() {
 }
 
 /*
-* The setup routine for the the robot code.
-*/
+ * The setup routine for the the robot code.
+ */
 void setup() {
   // Start serial communication
   Serial.begin(SERIAL_BANDWIDTH);
