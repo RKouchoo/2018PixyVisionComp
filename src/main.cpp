@@ -14,7 +14,7 @@
 /*
     3         4
 
-    r        l
+  right      left
 
     2  mouth  1
 */
