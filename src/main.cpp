@@ -180,7 +180,6 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     // Left movements
-
     case ROBOT_CRAB_LEFT:
       setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
@@ -210,7 +209,6 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     // Right movements
-
     case ROBOT_CRAB_RIGHT:
       setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
@@ -276,11 +274,11 @@ switch (object) {
 }
 
   uint16_t blocks = pixy.getBlocks();                       // Get the data from the pixy.
-  objectChoiceSignature = pixy.blocks[objectId].signature;  //get object's signature
-  objectXPos = pixy.blocks[objectId].x;                     //get x position
-  objectYPos = pixy.blocks[objectId].y;                     //get y position
-  object_width = pixy.blocks[objectId].width;               //get width
-  object_height = pixy.blocks[objectId].height;             //get height
+  objectChoiceSignature = pixy.blocks[objectId].signature;  // get object's signature
+  objectXPos = pixy.blocks[objectId].x;                     // get x position
+  objectYPos = pixy.blocks[objectId].y;                     // get y position
+  object_width = pixy.blocks[objectId].width;               // get width
+  object_height = pixy.blocks[objectId].height;             // get height
 }
 
 /*
@@ -291,6 +289,7 @@ double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
   int div = objectDistance / maxObjectDistance;
   return map(div, 0, 1500, 0, 255);
 }
+
 /*
 * The setup routine for the the robot code.
 */
@@ -319,18 +318,18 @@ void loop() {
 
   // Check if the pixy has the proper object lock.
   if (objectChoiceSignature == CMYK_ORANGE_BALL) {
-    // Calculate the new area for the ball that is being tracked.
-    object_newArea = object_width * object_height; //calculate the object area
-    if (objectXPos < Xmin) { //turn left if x position < max x position
+    object_newArea = object_width * object_height;  //calculate the object area
+
+    if (objectXPos < Xmin) {                        // turn left if x position < max x position
       setRobotDirection(ROBOT_STRAFE_LEFT, 200);
-    } else if (objectXPos > Xmax) { //turn right if x position > max x position
+    } else if (objectXPos > Xmax) {                 // turn right if x position > max x position
       setRobotDirection(ROBOT_STRAFE_RIGHT, 200);
-    } else if (object_newArea < minArea) { //go forward if object too small
+    } else if (object_newArea < minArea) {          // go forward if object too small
       setRobotDirection(ROBOT_FORWARD, 200);
-    } else if (object_newArea > maxArea) { //go backward if object too big
+    } else if (object_newArea > maxArea) {          // go backward if object too big
       setRobotDirection(ROBOT_BACKWARD, 200);
     } else {
-      setRobotDirection(ROBOT_STOP, LOW); // stop the robot if it has lost sight of the ball.
+      setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
     }
   } else {
       setRobotDirection(ROBOT_STOP, LOW);
