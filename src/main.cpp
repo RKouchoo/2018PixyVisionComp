@@ -146,7 +146,10 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
 
   switch (robotDirection) {
     case ROBOT_FORWARD:
-      // Move forward
+      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
     break;
 
     case ROBOT_BACKWARD:
@@ -170,7 +173,10 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     case ROBOT_STOP:
-      // Stop the robot
+      setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
     break;
   }
 
