@@ -63,6 +63,12 @@ static int MOTOR_TWO_PWM = 1;
 static int MOTOR_THREE_PWM = 1;
 static int MOTOR_FOUR_PWM = 1;
 
+static int LIGHT_SENSOR_BACK = 0;
+static int LIGHT_SENSOR_LEFT = 0;
+static int LIGHT_SENSOR_RIGHT = 0;
+
+static int lightSensors[3] = {LIGHT_SENSOR_BACK, LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT};
+
 /*
  * The arrays that collect the data for automated setup routines.
  */
@@ -129,6 +135,15 @@ void initMotorConfig(int motorList[2][4]) {
 void initMotorPwmConfig(int pwmChannel[4]) {
   for (int i = 0; i < 4; i ++) {
     pinMode(OUTPUT, pwmChannel[i]);
+  }
+}
+
+/*
+* routine to set up the sensor pins as an input.
+*/
+void initLightSensorConfig(int sensors[3]) {
+  for (int i = 0; i < 3; i ++) {
+    pinMode(INPUT, sensors[i]);
   }
 }
 
@@ -314,6 +329,7 @@ void setup() {
   pixy.init();
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
+  initLightSensorConfig(lightSensors);
 
   // make sure the robot is not moving until loop runs
   setRobotDirection(ROBOT_STOP, 0);
