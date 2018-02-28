@@ -7,6 +7,11 @@
   \____/\_|   \/   \/    \____/\___/\_| \_| \____/\___/ \___/  \_/   \____/\_| \_\____/\_| |_/\_| \_/\____/\_| \_|\____/
   Author: @RKouchoo
 
+  Last major edit:
+    Feb 28, 2018
+
+  Written for SPX robotics
+
 */
 
 // Robot motor layout diagram
