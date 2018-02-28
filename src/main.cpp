@@ -182,7 +182,9 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
       setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
-    // Left movements
+    /*
+    * left movements
+    */
     case ROBOT_CRAB_LEFT:
       setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
@@ -211,7 +213,9 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
       setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
-    // Right movements
+    /*
+    * left movements
+    */
     case ROBOT_CRAB_RIGHT:
       setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
       setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
@@ -338,6 +342,7 @@ void loop() {
       setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
     }
   } else {
+      // Code to tell the other robot to step in, for now just look for the ball.
       scanObjects(CMYK_ORANGE_BALL);
   }
 }
