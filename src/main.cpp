@@ -126,6 +126,9 @@ void initMotorPwmConfig(int pwmChannel[4]) {
   }
 }
 
+/*
+* hardware ish level of code development
+*/
 void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
   switch (motorDirection) {
     case MOTOR_FORWARD:
@@ -320,14 +323,17 @@ void loop() {
   if (objectChoiceSignature == CMYK_ORANGE_BALL) {
     object_newArea = object_width * object_height;  //calculate the object area
 
+    // calculate the speed for the robot
+    double speed = calculateRobotSpeed(object_newArea, maxArea);
+
     if (objectXPos < Xmin) {                        // turn left if x position < max x position
-      setRobotDirection(ROBOT_STRAFE_LEFT, 200);
+      setRobotDirection(ROBOT_STRAFE_LEFT, speed);
     } else if (objectXPos > Xmax) {                 // turn right if x position > max x position
-      setRobotDirection(ROBOT_STRAFE_RIGHT, 200);
+      setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
     } else if (object_newArea < minArea) {          // go forward if object too small
-      setRobotDirection(ROBOT_FORWARD, 200);
+      setRobotDirection(ROBOT_FORWARD, speed);
     } else if (object_newArea > maxArea) {          // go backward if object too big
-      setRobotDirection(ROBOT_BACKWARD, 200);
+      setRobotDirection(ROBOT_BACKWARD, speed);
     } else {
       setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
     }
