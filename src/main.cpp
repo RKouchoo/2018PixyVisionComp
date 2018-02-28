@@ -338,6 +338,6 @@ void loop() {
       setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
     }
   } else {
-      setRobotDirection(ROBOT_STOP, LOW);
+      scanObjects(CMYK_ORANGE_BALL);
   }
 }
