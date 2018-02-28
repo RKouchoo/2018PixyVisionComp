@@ -56,7 +56,6 @@ static int motors[2][4] = { {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_F
 /**
   Camera object ID's to track
 */
-
 #define CMYK_CYAN_GOAL_ID 2
 #define CMYK_YELLOW_GOAL_ID 3
 #define CMYK_ORGANGE_BALL_ID 1
@@ -78,8 +77,10 @@ enum thisRobotDirection {
   ROBOT_BACKWARD,
   ROBOT_LEFT,
   ROBOT_STRAFE_LEFT,
+  ROBOT_ROTATE_LEFT,
   ROBOT_RIGHT,
   ROBOT_STRAFE_RIGHT,
+  ROBOT_ROTATE_RIGHT,
   ROBOT_STOP
 };
 
@@ -87,8 +88,9 @@ enum thisRobotDirection {
  * Takes an array of motor IDS and then creates all of the motor outputs
  */
 void initMotorConfig(int motorList[2][4]) {
-  static int firstLength = 2;
-  static int secondLength = 4;
+  int firstLength = 2;
+  int secondLength = 4;
+
   for (int i = 0; i < firstLength; i++) {
     for (int j = 0; j < secondLength; j++) {
       if (!motorList[i][j]) {
@@ -96,6 +98,7 @@ void initMotorConfig(int motorList[2][4]) {
       }
     }
   }
+
 }
 
 /*
@@ -140,7 +143,8 @@ void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
 }
 
 /*
- * Sets the robot direction and speed
+ * routine that sets the robot direction and speed.
+ * contains the logic that tells the motor exactly what to do.
  */
 void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
 
@@ -153,15 +157,22 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     case ROBOT_BACKWARD:
-      // Move backward
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
-   case ROBOT_LEFT:
+    case ROBOT_LEFT:
       // move left
     break;
 
     case ROBOT_STRAFE_LEFT:
       // Strafe left
+    break;
+
+    case ROBOT_ROTATE_LEFT:
+      // rotate left
     break;
 
     case ROBOT_RIGHT:
@@ -170,6 +181,10 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
 
     case ROBOT_STRAFE_RIGHT:
       // Strafe right
+    break;
+
+    case ROBOT_ROTATE_RIGHT:
+      // rotate right
     break;
 
     case ROBOT_STOP:
@@ -248,6 +263,7 @@ void loop() {
   maxArea = object_area + 1000;
   minArea = object_area - 1000;
 
+  // Check if the pixy has the proper object lock.
   if (objectChoiceSignature == CMYK_ORANGE_BALL) {
 
     // Calculate the new area for the ball that is being tracked.
