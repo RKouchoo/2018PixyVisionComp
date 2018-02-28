@@ -10,12 +10,13 @@
 */
 
 // Robot motor layout diagram
+// 1, 2, 3, 4 are the corresponding motor names to the code.
 
 /*
-    3         4
+    3   back  4
 
   right      left
-
+       / - \
     2  mouth  1
 */
 
@@ -43,9 +44,10 @@ unsigned int Xmax = 200;               //max x position
 unsigned int maxArea = 0;
 unsigned int minArea = 0;
 
-/**
-   Hardware variables
-*/
+/*
+ *  Hardware variables
+ *  NEED TO BE UPDATED AS SOON AS HARDWARE FINISHED
+ */
 static int MOTOR_ONE[2] = {1, 2}; // forward and backwards controller channels `.
 static int MOTOR_TWO[2] = {1, 2};
 static int MOTOR_THREE[2] = {1, 2};
@@ -58,14 +60,13 @@ static int MOTOR_FOUR_PWM = 1;
 
 /*
  * The arrays that collect the data for automated setup routines.
- *
  */
 static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
 static int motors[2][4] = { {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]}, {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]} };
 
-/**
-  Camera object ID's to track
-*/
+/*
+ * Camera object ID's to track
+ */
 #define CMYK_CYAN_GOAL_ID 2
 #define CMYK_YELLOW_GOAL_ID 3
 #define CMYK_ORGANGE_BALL_ID 1
@@ -214,7 +215,7 @@ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
     break;
 
     /*
-    * left movements
+    * right movements
     */
     case ROBOT_CRAB_RIGHT:
       setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
