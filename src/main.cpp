@@ -6,7 +6,7 @@
   /\__/ / |   / /^\ \   | \__/\_| |_| |\ \ | \__/\ |_| |_| |_  | |   | |_/ / |\ \| |___| | | || |\  \| |___| |\ \ /\__/ /
   \____/\_|   \/   \/    \____/\___/\_| \_| \____/\___/ \___/  \_/   \____/\_| \_\____/\_| |_/\_| \_/\____/\_| \_|\____/
   Author: @RKouchoo
-
+  Emtional support: @BBlkBoi
   Last major edit:
     Feb 28, 2018
 
@@ -391,7 +391,7 @@ void threadRunner() {
 /*
  * The setup routine for the the robot code.
  */
-void setup() {
+vxoid setup() {
   // Start serial communication
   Serial.begin(SERIAL_BANDWIDTH);
 
