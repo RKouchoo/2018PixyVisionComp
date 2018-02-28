@@ -17,9 +17,10 @@ Pixy pixy; // Create a pixy object
 /**
    Pixy variables
 */
-int object_signature = 0;
-int object_x = 0;                      //positon x axis
-int object_y = 0;                      //position y axis
+int objectChoiceSignature = 0;
+
+int objectXPos = 0;                      //positon x axis
+int objectYPos = 0;                      //position y axis
 unsigned int object_width = 0;         //object's width
 unsigned int object_height = 0;        //object's height
 unsigned int object_area = 0;
@@ -32,12 +33,6 @@ int minArea = 0;
 /**
    Hardware variables
 */
-int motor1 = 4;                 //motor1 on Pin D4
-int enable1 = 5;                //enable1 on Pin D5
-int motor2 = 7;                 //motor2 on Pin D7
-int enable2 = 6;                //enable2 on Pin D6
-int Speed = 70;                 //speed for motor
-
 static unsigned int MOTOR_ONE[2] = {1, 2}; // forward and backwards controller channels `.
 static unsigned int MOTOR_TWO[2] = {1, 2};
 static unsigned int MOTOR_THREE[2] = {1, 2};
@@ -178,15 +173,16 @@ void scanObjects() {
   int i = 1;
   uint16_t blocks;
   blocks = pixy.getBlocks();  //receive data from pixy
-  object_signature = pixy.blocks[i].signature;    //get object's signature
-  object_x = pixy.blocks[i].x;                    //get x position
-  object_y = pixy.blocks[i].y;                    //get y position
+  objectChoiceSignature = pixy.blocks[i].signature;    //get object's signature
+  objectXPos = pixy.blocks[i].x;                    //get x position
+  objectYPos = pixy.blocks[i].y;                    //get y position
   object_width = pixy.blocks[i].width;            //get width
   object_height = pixy.blocks[i].height;          //get height
 }
 
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
   initMotorConfig(motors);
   initMotorPwmConfig(pwms);
@@ -202,19 +198,28 @@ void loop() {
   maxArea = object_area + 1000;
   minArea = object_area - 1000;
   
-  if (object_signature == CMYK_ORANGE_BALL) {
+  if (objectChoiceSignature == CMYK_ORANGE_BALL) {
+
+    // Calculate the new area for the ball that is being tracked.
+    
     object_newArea = object_width * object_height; //calculate the object area
-    if (object_x < Xmin) { //turn left if x position < max x position
+ 
+    if (objectXPos < Xmin) { //turn left if x position < max x position
       setRobotDirection(ROBOT_STRAFE_LEFT, 200);
-    } else if (object_x > Xmax) { //turn right if x position > max x position
+    
+    } else if (objectXPos > Xmax) { //turn right if x position > max x position
       setRobotDirection(ROBOT_STRAFE_RIGHT, 200);
+    
     } else if (object_newArea < minArea) { //go forward if object too small
       setRobotDirection(ROBOT_FORWARD, 200);
+    
     } else if (object_newArea > maxArea) { //go backward if object too big
       setRobotDirection(ROBOT_BACKWARD, 200);
+    
     } else {
-      setRobotDirection(ROBOT_STOP, LOW);
+      setRobotDirection(ROBOT_STOP, LOW); // stop the robot if it has lost sight of the ball.
     }
+    
   } else {
       setRobotDirection(ROBOT_STOP, LOW);
   }
