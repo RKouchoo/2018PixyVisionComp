@@ -15,7 +15,7 @@
 */
 
 // Robot motor layout diagram
-// 1, 2, 3, 4 are the corresponding motor names to the code.
+// 1, 2, 3, 4 are the corresponding motor names in the code.
 
 /*
     3   back  4
