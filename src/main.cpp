@@ -82,6 +82,10 @@ static int motors[2][4] = { {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_F
 #define CMYK_YELLOW_GOAL_ID 3
 #define CMYK_ORGANGE_BALL_ID 1
 
+#define FEILD_BLACK_LINE_RATIO 50
+#define FEILD_WHITE_LINE_RATIO 50
+#define FEILD_GREEN_SURFACE_RATIO 50
+
 enum cameraTrackingObject {
   CMYK_CYAN_GOAL,
   CMYK_YELLOW_GOAL,
@@ -111,6 +115,12 @@ enum thisRobotDirection {
   ROBOT_STRAFE_RIGHT_BACKWARD,
   ROBOT_ROTATE_RIGHT,
   ROBOT_STOP
+};
+
+enum thisFoundFeildObject {
+  FEILD_BLACK_LINE,
+  FEILD_WHITE_LINE,
+  FEILD_GREEN_SURFACE
 };
 
 /*
@@ -148,10 +158,25 @@ void initLightSensorConfig(int sensors[3]) {
 }
 
 /*
- * returns the current value of the selected sensor. 
+ * returns the current value of the selected sensor.
  */
 double getLightSensorValue(int sensor) {
   return analogRead(sensor);
+}
+
+/*
+* returns the found object below the robot.
+*/
+thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
+  if (sensorValue <= FEILD_BLACK_LINE_RATIO) {
+    return FEILD_BLACK_LINE;
+  } else if (sensorValue <= FEILD_WHITE_LINE_RATIO) {
+    return FEILD_WHITE_LINE;
+  } else if (sensorValue <= FEILD_GREEN_SURFACE_RATIO) {
+    return FEILD_GREEN_SURFACE;
+  } else {
+    return FEILD_GREEN_SURFACE;
+  }
 }
 
 /*
