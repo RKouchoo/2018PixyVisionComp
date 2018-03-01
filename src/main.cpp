@@ -391,7 +391,7 @@ void threadRunner() {
 /*
  * The setup routine for the the robot code.
  */
-vxoid setup() {
+void setup() {
   // Start serial communication
   Serial.begin(SERIAL_BANDWIDTH);
 
