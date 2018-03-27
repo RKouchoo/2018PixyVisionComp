@@ -6,36 +6,58 @@
   /\__/ / |   / /^\ \   | \__/\_| |_| |\ \ | \__/\ |_| |_| |_  | |   | |_/ / |\ \| |___| | | || |\  \| |___| |\ \ /\__/ /
   \____/\_|   \/   \/    \____/\___/\_| \_| \____/\___/ \___/  \_/   \____/\_| \_\____/\_| |_/\_| \_/\____/\_| \_|\____/
   Author: @RKouchoo
-  Emtional support: @BBlkBoi
+  Emotional support: @BBlkBoi
+  
   Last major edit:
-    Feb 28, 2018
-
+    March 27, 2018
   Written for SPX robotics
+  Written in sublime with deviot.
 
   Robot motor layout diagram
+  
   1, 2, 3, 4 are the corresponding motor names in the code.
-
+  
     3   back  4
-
   right      left
        / - \
     2  mouth  1
 
+  FYI colour = color.. ;) (American libraries...)
+
+  TODO List:
+   - Implement gyro code.
+   - Implement RF communication.
+   - field is spelt as feild (auto fillout)
+  
+  RF204L01 module guide:
+  https://howtomechatronics.com/tutorials/arduino/arduino-wireless-communication-nrf24l01-tutorial/
 */
 
+// "Stock" libraries
 #include <Arduino.h>
 #include <SPI.h>
+
+// "Custom" libraries
 #include <Pixy.h>
+#include <Adafruit.h>
+#include <Adafruit_NeoPixel.h>
+#include <Adafruit_VL53L0X.h>
+#include <nRF24L01.h>
+#include <RF24.h>
 
 #define SERIAL_BANDWIDTH 9600
+#define NEO_PIXEL_PER_ROBOT 16
+#define DUAL_NEO_PIN 12
+#define RF_PIN
 
 Pixy pixy; // Create a pixy object
+Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, NEO_GRB + NEO_KHZ800); // create the object for interfacing both of the LED bars.
+Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
 
 /*
 * Pixy variables
 */
 int objectChoiceSignature = 0;
-
 unsigned int objectXPos = 0;           //positon x axis
 unsigned int objectYPos = 0;           //position y axis
 unsigned int object_width = 0;         //object's width
@@ -67,6 +89,11 @@ static int LIGHT_SENSOR_FRONT = 0;
 static int LIGHT_SENSOR_BACK = 0;
 
 static int lightSensors[4] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSOR_FRONT, LIGHT_SENSOR_BACK};
+
+static int NOT_FOUND_COLOR[3] = {255, 0, 0}; // dark red
+static int FOUND_COLOR[3] = {255, 105, 180}; // hot pink
+static int REFLECTIVE_COLOR[3] = {250, 250, 210}; // At the moment this is bright yellow.
+static int LOCAL_ROBOT_ERROR_COLOR = {237, 148, 90}; // error orange, should be changed later so the robot does not break the rules lol.
 
 /*
  * The arrays that collect the data for automated setup routines.
@@ -125,6 +152,13 @@ enum thisFoundFeildObject {
   FEILD_GREEN_SURFACE
 };
 
+enum dualStripColor {
+  NOT_FOUND_COLOR,
+  FOUND_COLOR,
+  REFLECTIVE_COLOR,
+  LOCAL_ROBOT_ERROR_COLOR
+};
+
 /*
  * Takes an array of motor IDS and then creates all of the motor outputs
  */
@@ -168,17 +202,15 @@ double getLightSensorValue(int sensor) {
 
 /*
  * returns the found object below the robot.
+ * Will not 
  */
 thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
   if (sensorValue <= FEILD_BLACK_LINE_RATIO) {
     return FEILD_BLACK_LINE;
-
-  } else if (sensorValue <= FEILD_WHITE_LINE_RATIO) {
+  } if (sensorValue <= FEILD_WHITE_LINE_RATIO) {
     return FEILD_WHITE_LINE;
-
-  } else if (sensorValue <= FEILD_GREEN_SURFACE_RATIO) {
+  } if (sensorValue <= FEILD_GREEN_SURFACE_RATIO) {
     return FEILD_GREEN_SURFACE;
-
   } else {
     return FEILD_GREEN_SURFACE;
   }
@@ -357,7 +389,63 @@ double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
   return map(div, 0, 1000, 0, 255);
 }
 
+ /*
+  * Updated the led strips
+  */
+void updateDualStrip() {
+  dualStrip.show();
+}
+
+ /*
+  * Sets the led strip color before it is flushed.
+  */
+void setDualStripColor(int r, int g, ing b) {
+  for(int i = 0; i <= NEO_PIXEL_PER_ROBOT; i ++) {
+    dualStrip.setPixelColor(i, r, g, b);
+  }
+}
+
+
+void setDualStripColor(dualStripColor color) {
+  switch(color) {
+    case NOT_FOUND_RED:
+      setDualStripColor(NOT_FOUND_COLOR[0], NOT_FOUND_COLOR[1], NOT_FOUND_COLOR[2]);
+    break;
+
+    case FOUND_PINK_COLOR:
+      setDualStripColor(FOUND_COLOR[0], FOUND_COLOR[1], FOUND_COLOR[2]);
+    break;
+
+    case REFLECTIVE_COLOR:
+      setDualStripColor(REFLECTIVE_COLOR[0], REFLECTIVE_COLOR[1], REFLECTIVE_COLOR[2]);
+    break;
+
+    case LOCAL_ROBOT_ERROR_COLOR:
+      setDualStripColor(LOCAL_ROBOT_ERROR_COLOR[0], LOCAL_ROBOT_ERROR_COLOR[1], LOCAL_ROBOT_ERROR_COLOR[2]);
+    break;
+  }
+
+  updateDualStrip(); // push the new values to the strip's after the values have been set.
+}
+
+VL53L0X_RangingMeasurementData_t measureTOFDistance() { // gets the measurement object from the adafruit library.
+  VL53L0X_RangingMeasurementData_t measurementObject;
+  timeOfFlight.rangingTest(&measurementObject, false);  
+  return measurementObject;
+}
+
+double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) { // gets the distance from the measured object to the robot.
+  if (measurementObject.RangeStats  == 4) {
+    Serial.println("12C TOF SENSOR ERROR");
+    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
+    return null;
+  } else {
+    return measurementObject.RangeMilliMeter;
+  }
+}
+
 void threadRunner() {
+
     scanObjects(CMYK_ORANGE_BALL);
 
     object_area = object_width * object_height; //calculate the object area
@@ -386,6 +474,7 @@ void threadRunner() {
         // Code to tell the other robot to step in, for now just look for the ball.
         scanObjects(CMYK_ORANGE_BALL);
     }
+
 }
 
 /*
@@ -401,12 +490,20 @@ void setup() {
   initMotorConfig(motors);
   initLightSensorConfig(lightSensors);
 
+  dualStrip.begin();
+  dualStrip.show(); // Initialize all pixels to 'off'
+
+    if (!timeOfFlight.begin()) {
+    Serial.println(F("Failed to boot VL53L0X"));
+        setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
+  }
+
   // make sure the robot is not moving until loop runs
   setRobotDirection(ROBOT_STOP, 0);
 }
 
-
 // The main loop that the robot runs at ~100Hz
 void loop() {
+  // run the thread
   threadRunner();
 }
