@@ -402,6 +402,7 @@ void updateDualStrip() {
 void setDualStripColor(int r, int g, ing b) {
   for(int i = 0; i <= NEO_PIXEL_PER_ROBOT; i ++) {
     dualStrip.setPixelColor(i, r, g, b);
+    dualStrip.setBrightness(i, 255, 255, 255); // Sets the brightness to full
   }
 }
 
@@ -445,7 +446,6 @@ double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) {
 }
 
 void threadRunner() {
-
     scanObjects(CMYK_ORANGE_BALL);
 
     object_area = object_width * object_height; //calculate the object area
@@ -474,7 +474,6 @@ void threadRunner() {
         // Code to tell the other robot to step in, for now just look for the ball.
         scanObjects(CMYK_ORANGE_BALL);
     }
-
 }
 
 /*
