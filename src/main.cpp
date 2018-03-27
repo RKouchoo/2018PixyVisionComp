@@ -400,7 +400,7 @@ void updateDualStrip() {
   * Sets the led strip color before it is flushed.
   */
 void setDualStripColor(int r, int g, ing b) {
-  for(int i = 0; i <= NEO_PIXEL_PER_ROBOT; i ++) {
+  for(int i = 0; i < NEO_PIXEL_PER_ROBOT; i ++) {
     dualStrip.setPixelColor(i, r, g, b);
     dualStrip.setBrightness(i, 255, 255, 255); // Sets the brightness to full
   }
