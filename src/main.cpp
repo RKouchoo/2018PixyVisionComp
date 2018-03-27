@@ -93,7 +93,7 @@ static int lightSensors[4] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSO
 static int NOT_FOUND_COLOR[3] = {255, 0, 0}; // dark red
 static int FOUND_COLOR[3] = {255, 105, 180}; // hot pink
 static int REFLECTIVE_COLOR[3] = {250, 250, 210}; // At the moment this is bright yellow.
-static int LOCAL_ROBOT_ERROR_COLOR = {237, 148, 90}; // error orange, should be changed later so the robot does not break the rules lol.
+static int LOCAL_ROBOT_ERROR_COLOR[3] = {237, 148, 90}; // error orange, should be changed later so the robot does not break the rules lol.
 
 /*
  * The arrays that collect the data for automated setup routines.
