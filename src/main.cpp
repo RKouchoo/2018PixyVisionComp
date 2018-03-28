@@ -9,7 +9,7 @@
   Emotional support: @BBlkBoi
   
   Last major edit:
-    March 27, 2018
+    March 28, 2018
   Written for SPX robotics
   Written in sublime with deviot.
 
@@ -36,6 +36,7 @@
 // "Stock" libraries
 #include <Arduino.h>
 #include <SPI.h>
+#include <Wire.h>
 
 // "Custom" libraries
 #include <Pixy.h>
@@ -44,15 +45,45 @@
 #include <Adafruit_VL53L0X.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <I2Cdev.h>
+#include <MPU6050.h>
 
 #define SERIAL_BANDWIDTH 9600
 #define NEO_PIXEL_PER_ROBOT 16
 #define DUAL_NEO_PIN 12
-#define RF_PIN
+#define RF_PIN 0
+
+#define GYRO_LOW_ADDRES = 0x68 // depends on how I configure the robot.
+#define GYRO_HIGH_ADDRES = 0x69
+
 
 Pixy pixy; // Create a pixy object
 Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, NEO_GRB + NEO_KHZ800); // create the object for interfacing both of the LED bars.
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
+MPU6050 accelgyro = MPU6050();
+
+/*
+* Gyro variables
+*/
+int16_t gyro_ax, gyro_ay, gyro_az;
+int16_t gyro_gx, gyro_gy, gyro_gz;
+
+// accelerometer values
+int accel_reading;
+int accel_corrected;
+int accel_offset = 200;
+float accel_angle;
+float accel_scale = 1; // set to 0.01
+
+// gyro values
+int gyro_offset = 151; // 151
+int gyro_corrected;
+int gyro_reading;
+float gyro_rate;
+float gyro_scale = 0.02; // 0.02 by default - tweak as required
+float gyro_angle;
+float angle = 0.00; // value to hold final calculated gyro angle
+
 
 /*
 * Pixy variables
@@ -170,6 +201,7 @@ void initMotorConfig(int motorList[2][4]) {
     for (int j = 0; j < secondLength; j++) {
       if (!motorList[i][j]) {
         pinMode(OUTPUT, motorList[i][j]);
+        Serial.println("Registered motors: " + motorList[i][j]);
       }
     }
   }
@@ -248,8 +280,7 @@ void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double
     break;
 
     default:
-      digitalWrite(motorId[0], LOW);
-      digitalWrite(motorId[1], LOW);
+      setMotorDirection(MOTOR_STOP, motorId, motorSpeed); // The default command is motor stopped.
   }
 }
 
@@ -372,7 +403,7 @@ switch (object) {
 
 }
   // CLANG: why is ths an error!? v
-  uint16_t blocks = pixy.getBlocks();                       // Get the data from the pixy.
+  uint16_t blocks = pixy.getBlocks();                       // get the data from the pixy.
   objectChoiceSignature = pixy.blocks[objectId].signature;  // get object's signature
   objectXPos = pixy.blocks[objectId].x;                     // get x position
   objectYPos = pixy.blocks[objectId].y;                     // get y position
@@ -399,7 +430,7 @@ void updateDualStrip() {
  /*
   * Sets the led strip color before it is flushed.
   */
-void setDualStripColor(int r, int g, ing b) {
+void setDualStripColor(int r, int g, int b) {
   for(int i = 0; i < NEO_PIXEL_PER_ROBOT; i ++) {
     dualStrip.setPixelColor(i, r, g, b);
     dualStrip.setBrightness(i, 255, 255, 255); // Sets the brightness to full
@@ -483,8 +514,11 @@ void setup() {
   // Start serial communication
   Serial.begin(SERIAL_BANDWIDTH);
 
+  Wire.begin();
+
   // set up hardware
   pixy.init();
+  gyro.Initialize();
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
   initLightSensorConfig(lightSensors);
@@ -492,9 +526,14 @@ void setup() {
   dualStrip.begin();
   dualStrip.show(); // Initialize all pixels to 'off'
 
-    if (!timeOfFlight.begin()) {
+  if (!timeOfFlight.begin()) { // only complain if its not working.
     Serial.println(F("Failed to boot VL53L0X"));
-        setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
+    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
+  }
+
+  if (!gyro.testConnection()) { // only complain if its not working.
+    Serial.println(F("Failed to boot MPU6050"));
+    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR); 
   }
 
   // make sure the robot is not moving until loop runs
