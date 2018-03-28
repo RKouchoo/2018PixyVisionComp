@@ -63,27 +63,22 @@ Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight s
 MPU6050 accelgyro = MPU6050();
 
 /*
-* Gyro variables
-*/
-int16_t gyro_ax, gyro_ay, gyro_az;
-int16_t gyro_gx, gyro_gy, gyro_gz;
-
+ * Gyro variables
+ */
 // accelerometer values
-int accel_reading;
-int accel_corrected;
 int accel_offset = 200;
-float accel_angle;
 float accel_scale = 1; // set to 0.01
 
 // gyro values
 int gyro_offset = 151; // 151
-int gyro_corrected;
-int gyro_reading;
-float gyro_rate;
 float gyro_scale = 0.02; // 0.02 by default - tweak as required
-float gyro_angle;
 float angle = 0.00; // value to hold final calculated gyro angle
 
+// time stamp variables
+float loop_time = 0.05; // 50ms loop
+int last_update;
+int cycle_time;
+long last_cycle = 0;
 
 /*
 * Pixy variables
@@ -476,6 +471,46 @@ double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) {
   }
 }
 
+float getGyroAngle() { // gets the angle that the gyro is facing
+  
+  int gyro_corrected;
+  int gyro_reading;
+  float gyro_rate;
+  float accel_angle;
+  float gyro_angle;
+  int accel_reading;
+  int accel_corrected;
+
+  int16_t ax, ay, az;
+  int16_t gx, gy, gz;
+
+  gryo.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+  accel_reading = ax;
+  accel_corrected = accel_reading - accel_offset;
+  accel_corrected = map(accel_corrected, -16800, 16800, -90, 90);
+  accel_corrected = constrain(accel_corrected, -90, 90);
+  accel_angle = (float)(accel_corrected * accel_scale);
+
+  gyro_reading = gy;
+  gyro_corrected = (float)((gyro_reading/131) - gyro_offset);  // 131 is sensivity of gyro from data sheet
+  gyro_rate = (gyro_corrected * gyro_scale) * -loop_time;      // loop_time = 0.05 ie 50ms        
+  gyro_angle = angle + gyro_rate;
+
+  return gyro_angle;
+}
+
+void timeStamp() {
+  void time_stamp(){
+  while ((millis() - last_cycle) < 50){
+  delay(1);
+  }
+  // once loop cycle reaches 50ms, reset timer value and continue
+  cycle_time = millis() - last_cycle;
+  last_cycle = millis();
+}
+}
+
 void threadRunner() {
     scanObjects(CMYK_ORANGE_BALL);
 
@@ -507,9 +542,7 @@ void threadRunner() {
     }
 }
 
-/*
- * The setup routine for the the robot code.
- */
+/////////////////////////////////////////////SETUP/////////////////////////////////////////////
 void setup() {
   // Start serial communication
   Serial.begin(SERIAL_BANDWIDTH);
@@ -540,8 +573,11 @@ void setup() {
   setRobotDirection(ROBOT_STOP, 0);
 }
 
-// The main loop that the robot runs at ~100Hz
+/////////////////////////////////////////////LOOP/////////////////////////////////////////////
 void loop() {
   // run the thread
   threadRunner();
+
+  // calc the time
+  timeStamp();
 }
