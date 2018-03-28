@@ -519,8 +519,9 @@ void threadRunner() {
 
     // Check if the pixy has the proper object lock.
     if (objectChoiceSignature == CMYK_ORANGE_BALL) {
+      setDualStripColor(FOUND_COLOR);
+      
       object_newArea = object_width * object_height;  //calculate the object area
-
       // calculate the speed for the robot
       double speed = calculateRobotSpeed(object_newArea, maxArea);
 
@@ -530,6 +531,7 @@ void threadRunner() {
         setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
       } else if (object_newArea < minArea) {          // go forward if object too small
         setRobotDirection(ROBOT_FORWARD, speed);
+        setDualStripColor(REFLECTIVE_COLOR);
       } else if (object_newArea > maxArea) {          // go backward if object too big
         setRobotDirection(ROBOT_BACKWARD, speed);
       } else {
