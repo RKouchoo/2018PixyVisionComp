@@ -56,11 +56,10 @@
 #define GYRO_LOW_ADDRES = 0x68 // depends on how I configure the robot.
 #define GYRO_HIGH_ADDRES = 0x69
 
-
 Pixy pixy; // Create a pixy object
 Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, NEO_GRB + NEO_KHZ800); // create the object for interfacing both of the LED bars.
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
-MPU6050 accelgyro = MPU6050();
+MPU6050 gyro = MPU6050();
 
 /*
  * Gyro variables
