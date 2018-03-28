@@ -40,7 +40,7 @@
 
 // "Custom" libraries
 #include <Pixy.h>
-#include <Adafruit.h>
+//#include <Adafruit.h>
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_VL53L0X.h>
 #include <nRF24L01.h>
@@ -116,10 +116,10 @@ static int LIGHT_SENSOR_BACK = 0;
 
 static int lightSensors[4] = {LIGHT_SENSOR_LEFT, LIGHT_SENSOR_RIGHT, LIGHT_SENSOR_FRONT, LIGHT_SENSOR_BACK};
 
-static int NOT_FOUND_COLOR[3] = {255, 0, 0}; // dark red
-static int FOUND_COLOR[3] = {255, 105, 180}; // hot pink
-static int REFLECTIVE_COLOR[3] = {250, 250, 210}; // At the moment this is bright yellow.
-static int LOCAL_ROBOT_ERROR_COLOR[3] = {237, 148, 90}; // error orange, should be changed later so the robot does not break the rules lol.
+static int NOT_FOUND_COLOR_DATA[3] = {255, 0, 0}; // dark red
+static int FOUND_COLOR_DATA[3] = {255, 105, 180}; // hot pink
+static int REFLECTIVE_COLOR_DATA[3] = {250, 250, 210}; // At the moment this is bright yellow.
+static int LOCAL_ROBOT_ERROR_COLOR_DATA[3] = {237, 148, 90}; // error orange, should be changed later so the robot does not break the rules lol.
 
 /*
  * The arrays that collect the data for automated setup routines.
@@ -169,6 +169,7 @@ enum thisRobotDirection {
   ROBOT_STRAFE_RIGHT,
   ROBOT_STRAFE_RIGHT_BACKWARD,
   ROBOT_ROTATE_RIGHT,
+  
   ROBOT_STOP
 };
 
@@ -428,27 +429,27 @@ void updateDualStrip() {
 void setDualStripColor(int r, int g, int b) {
   for(int i = 0; i < NEO_PIXEL_PER_ROBOT; i ++) {
     dualStrip.setPixelColor(i, r, g, b);
-    dualStrip.setBrightness(i, 255, 255, 255); // Sets the brightness to full
+    dualStrip.setBrightness(255); // Sets the brightness to full
   }
 }
 
 
 void setDualStripColor(dualStripColor color) {
   switch(color) {
-    case NOT_FOUND_RED:
-      setDualStripColor(NOT_FOUND_COLOR[0], NOT_FOUND_COLOR[1], NOT_FOUND_COLOR[2]);
+    case NOT_FOUND_COLOR:
+      setDualStripColor(NOT_FOUND_COLOR_DATA[0], NOT_FOUND_COLOR_DATA[1], NOT_FOUND_COLOR_DATA[2]);
     break;
 
-    case FOUND_PINK_COLOR:
-      setDualStripColor(FOUND_COLOR[0], FOUND_COLOR[1], FOUND_COLOR[2]);
+    case FOUND_COLOR:
+      setDualStripColor(FOUND_COLOR_DATA[0], FOUND_COLOR_DATA[1], FOUND_COLOR_DATA[2]);
     break;
 
     case REFLECTIVE_COLOR:
-      setDualStripColor(REFLECTIVE_COLOR[0], REFLECTIVE_COLOR[1], REFLECTIVE_COLOR[2]);
+      setDualStripColor(REFLECTIVE_COLOR_DATA[0], REFLECTIVE_COLOR_DATA[1], REFLECTIVE_COLOR_DATA[2]);
     break;
 
     case LOCAL_ROBOT_ERROR_COLOR:
-      setDualStripColor(LOCAL_ROBOT_ERROR_COLOR[0], LOCAL_ROBOT_ERROR_COLOR[1], LOCAL_ROBOT_ERROR_COLOR[2]);
+      setDualStripColor(LOCAL_ROBOT_ERROR_COLOR_DATA[0], LOCAL_ROBOT_ERROR_COLOR_DATA[1], LOCAL_ROBOT_ERROR_COLOR_DATA[2]);
     break;
   }
 
@@ -462,10 +463,10 @@ VL53L0X_RangingMeasurementData_t measureTOFDistance() { // gets the measurement 
 }
 
 double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) { // gets the distance from the measured object to the robot.
-  if (measurementObject.RangeStats  == 4) {
+  if (measurementObject.RangeStatus  == 4) {
     Serial.println("12C TOF SENSOR ERROR");
     setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
-    return null;
+    return 0;
   } else {
     return measurementObject.RangeMilliMeter;
   }
@@ -484,7 +485,7 @@ float getGyroAngle() { // gets the angle that the gyro is facing
   int16_t ax, ay, az;
   int16_t gx, gy, gz;
 
-  gryo.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  gyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
   accel_reading = ax;
   accel_corrected = accel_reading - accel_offset;
@@ -549,7 +550,7 @@ void setup() {
 
   // set up hardware
   pixy.init();
-  gyro.Initialize();
+  gyro.initialize();
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
   initLightSensorConfig(lightSensors);
