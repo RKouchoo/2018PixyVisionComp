@@ -40,7 +40,6 @@
 
 // "Custom" libraries
 #include <Pixy.h>
-//#include <Adafruit.h>
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_VL53L0X.h>
 #include <nRF24L01.h>
