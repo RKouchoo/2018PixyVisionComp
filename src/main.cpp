@@ -56,6 +56,7 @@
 #define GYRO_LOW_ADDRES = 0x68 // depends on how I configure the robot.
 #define GYRO_HIGH_ADDRES = 0x69
 
+
 Pixy pixy; // Create a pixy object
 Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, NEO_GRB + NEO_KHZ800); // create the object for interfacing both of the LED bars.
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
@@ -500,14 +501,12 @@ float getGyroAngle() { // gets the angle that the gyro is facing
 }
 
 void timeStamp() {
-  void time_stamp(){
-  while ((millis() - last_cycle) < 50){
-  delay(1);
+  while ((millis() - last_cycle) < 50) {
+    delay(1);
   }
   // once loop cycle reaches 50ms, reset timer value and continue
   cycle_time = millis() - last_cycle;
   last_cycle = millis();
-}
 }
 
 void threadRunner() {
