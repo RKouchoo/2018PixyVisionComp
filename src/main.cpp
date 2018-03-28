@@ -28,7 +28,7 @@
    - Implement gyro code.
    - Implement RF communication.
    - field is spelt as feild (auto fillout)
-  
+   
   RF204L01 module guide:
   https://howtomechatronics.com/tutorials/arduino/arduino-wireless-communication-nrf24l01-tutorial/
 */
@@ -41,7 +41,7 @@
 // "Custom" libraries
 #include <Pixy.h>
 #include <Adafruit_NeoPixel.h>
-#include <Adafruit_VL53L0X.h>
+#include <Adafruit_VL53L0X.h> 
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <I2Cdev.h>
@@ -52,12 +52,13 @@
 #define DUAL_NEO_PIN 12
 #define RF_PIN 0
 
-#define GYRO_LOW_ADDRES = 0x68 // depends on how I configure the robot.
-#define GYRO_HIGH_ADDRES = 0x69
+#define GYRO_LOW_ADDRES 0x68 // depends on how I configure the robot.
+#define GYRO_HIGH_ADDRES 0x69
 
+#define PIXEL_MODE NEO_GRB + NEO_KHZ800
 
 Pixy pixy; // Create a pixy object
-Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, NEO_GRB + NEO_KHZ800); // create the object for interfacing both of the LED bars.
+Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, PIXEL_MODE); // create the object for interfacing both of the LED bars.
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
 MPU6050 gyro = MPU6050();
 
