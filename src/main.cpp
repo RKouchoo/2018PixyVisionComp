@@ -50,7 +50,7 @@
 #define SERIAL_BANDWIDTH 9600
 #define NEO_PIXEL_PER_ROBOT 16
 #define DUAL_NEO_PIN 12
-#define RF_PIN 0
+#define RF_PIN 22
 
 #define GYRO_LOW_ADDRES 0x68 // depends on how I configure the robot.
 #define GYRO_HIGH_ADDRES 0x69
@@ -62,7 +62,7 @@ Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PI
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
 MPU6050 gyro = MPU6050();
 
-/*
+/**
  * Gyro variables
  */
 // accelerometer values
@@ -80,7 +80,7 @@ int last_update;
 int cycle_time;
 long last_cycle = 0;
 
-/*
+/**
 * Pixy variables
 */
 int objectChoiceSignature = 0;
@@ -95,7 +95,7 @@ unsigned int Xmax = 200;               //max x position
 unsigned int maxArea = 0;
 unsigned int minArea = 0;
 
-/*
+/**
  *  Hardware variables
  *  NEED TO BE UPDATED AS SOON AS HARDWARE FINISHED
  */
@@ -121,7 +121,7 @@ static int FOUND_COLOR_DATA[3] = {255, 105, 180}; // hot pink
 static int REFLECTIVE_COLOR_DATA[3] = {250, 250, 210}; // At the moment this is bright yellow.
 static int LOCAL_ROBOT_ERROR_COLOR_DATA[3] = {237, 148, 90}; // error orange, should be changed later so the robot does not break the rules lol.
 
-/*
+/**
  * The arrays that collect the data for automated setup routines.
  */
 static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
@@ -130,7 +130,7 @@ static int motors[2][4] = {
   {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]}  // backward channels
 };
 
-/*
+/**
  * Camera object ID's to track
  */
 #define CMYK_CYAN_GOAL_ID 2
@@ -186,7 +186,7 @@ enum dualStripColor {
   LOCAL_ROBOT_ERROR_COLOR
 };
 
-/*
+/**
  * Takes an array of motor IDS and then creates all of the motor outputs
  */
 void initMotorConfig(int motorList[2][4]) {
@@ -203,7 +203,7 @@ void initMotorConfig(int motorList[2][4]) {
   }
 }
 
-/*
+/**
  * configuration routine for pwm channels
  */
 void initMotorPwmConfig(int pwmChannel[4]) {
@@ -212,7 +212,7 @@ void initMotorPwmConfig(int pwmChannel[4]) {
   }
 }
 
-/*
+/**
  * routine to set up the sensor pins as an input.
  */
 void initLightSensorConfig(int sensors[4]) {
@@ -221,14 +221,14 @@ void initLightSensorConfig(int sensors[4]) {
   }
 }
 
-/*
+/**
  * returns the current value of the selected sensor.
  */
 double getLightSensorValue(int sensor) {
   return analogRead(sensor);
 }
 
-/*
+/**
  * returns the found object below the robot.
  * Will not 
  */
@@ -244,7 +244,7 @@ thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
   }
 }
 
-/*
+/**
  * Routine for setting the speed for all of the motors on the robot.
  */
 void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
@@ -253,7 +253,7 @@ void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
   }
 }
 
-/*
+/**
  * hardware ish level of code development
  */
 void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
@@ -280,7 +280,7 @@ void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double
   }
 }
 
-/*
+/**
  * routine that sets the robot direction and speed.
  * contains the logic that tells the motor exactly what to do.
  */
@@ -413,7 +413,7 @@ switch (object) {
  */
 double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
   int div = objectDistance / maxObjectDistance; // stupid. need to get the actual distance of the ball from the robot.
-  return map(div, 0, 1000, 0, 255);
+  return map(div, 0, 1000, 0, 255); // returns a scaled number 
 }
 
  /*
@@ -424,7 +424,7 @@ void updateDualStrip() {
 }
 
  /*
-  * Sets the led strip color before it is flushed.
+  * Sets the led strip color with rgb values.
   */
 void setDualStripColor(int r, int g, int b) {
   for(int i = 0; i < NEO_PIXEL_PER_ROBOT; i ++) {
@@ -433,7 +433,9 @@ void setDualStripColor(int r, int g, int b) {
   }
 }
 
-
+/**
+ * sets the color with the simpler use of an enum object.
+ */
 void setDualStripColor(dualStripColor color) {
   switch(color) {
     case NOT_FOUND_COLOR:
@@ -579,6 +581,6 @@ void loop() {
   // run the thread
   threadRunner();
 
-  // calc the time
+  // calculate the time
   timeStamp();
 }
