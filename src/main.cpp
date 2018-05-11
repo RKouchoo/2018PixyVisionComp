@@ -31,7 +31,7 @@
    
   RF204L01 module guide:
   https://howtomechatronics.com/tutorials/arduino/arduino-wireless-communication-nrf24l01-tutorial/
-*/
+  */
 
 // "Stock" libraries
 #include <Arduino.h>
@@ -81,21 +81,6 @@ int cycle_time;
 long last_cycle = 0;
 
 /**
-* Pixy variables
-*/
-int objectChoiceSignature = 0;
-unsigned int objectXPos = 0;           //positon x axis
-unsigned int objectYPos = 0;           //position y axis
-unsigned int object_width = 0;         //object's width
-unsigned int object_height = 0;        //object's height
-unsigned int object_area = 0;
-unsigned int object_newArea = 0;
-unsigned int Xmin = 70;                //min x position
-unsigned int Xmax = 200;               //max x position
-unsigned int maxArea = 0;
-unsigned int minArea = 0;
-
-/**
  *  Hardware variables
  *  NEED TO BE UPDATED AS SOON AS HARDWARE FINISHED
  */
@@ -124,8 +109,8 @@ static int LOCAL_ROBOT_ERROR_COLOR_DATA[3] = {237, 148, 90}; // error orange, sh
 /**
  * The arrays that collect the data for automated setup routines.
  */
-static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
-static int motors[2][4] = {
+ static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
+ static int motors[2][4] = {
   {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]},  // forward channels
   {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]}  // backward channels
 };
@@ -133,15 +118,18 @@ static int motors[2][4] = {
 /**
  * Camera object ID's to track
  */
-#define CMYK_CYAN_GOAL_ID 2
-#define CMYK_YELLOW_GOAL_ID 3
-#define CMYK_ORGANGE_BALL_ID 1
+ #define CMYK_CYAN_GOAL_ID 2
+ #define CMYK_YELLOW_GOAL_ID 3
+ #define CMYK_ORGANGE_BALL_ID 1
 
-#define FEILD_BLACK_LINE_RATIO 50
-#define FEILD_WHITE_LINE_RATIO 50
-#define FEILD_GREEN_SURFACE_RATIO 50
+/*
+ * light sensor ratios.
+ */
+ #define FEILD_BLACK_LINE_RATIO 50
+ #define FEILD_WHITE_LINE_RATIO 50
+ #define FEILD_GREEN_SURFACE_RATIO 50
 
-enum cameraTrackingObject {
+ enum cameraTrackingObject {
   CMYK_CYAN_GOAL,
   CMYK_YELLOW_GOAL,
   CMYK_ORANGE_BALL
@@ -189,7 +177,7 @@ enum dualStripColor {
 /**
  * Takes an array of motor IDS and then creates all of the motor outputs
  */
-void initMotorConfig(int motorList[2][4]) {
+ void initMotorConfig(int motorList[2][4]) {
   int firstLength = 2;
   int secondLength = 4;
 
@@ -206,7 +194,7 @@ void initMotorConfig(int motorList[2][4]) {
 /**
  * configuration routine for pwm channels
  */
-void initMotorPwmConfig(int pwmChannel[4]) {
+ void initMotorPwmConfig(int pwmChannel[4]) {
   for (int i = 0; i < 4; i ++) {
     pinMode(OUTPUT, pwmChannel[i]);
   }
@@ -215,7 +203,7 @@ void initMotorPwmConfig(int pwmChannel[4]) {
 /**
  * routine to set up the sensor pins as an input.
  */
-void initLightSensorConfig(int sensors[4]) {
+ void initLightSensorConfig(int sensors[4]) {
   for (int i = 0; i < 4; i ++) {
     pinMode(INPUT, sensors[i]);
   }
@@ -224,7 +212,7 @@ void initLightSensorConfig(int sensors[4]) {
 /**
  * returns the current value of the selected sensor.
  */
-double getLightSensorValue(int sensor) {
+ double getLightSensorValue(int sensor) {
   return analogRead(sensor);
 }
 
@@ -232,22 +220,22 @@ double getLightSensorValue(int sensor) {
  * returns the found object below the robot.
  * Will not 
  */
-thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
+ thisFoundFeildObject getCurrentFeildObject(double sensorValue) {
   if (sensorValue <= FEILD_BLACK_LINE_RATIO) {
     return FEILD_BLACK_LINE;
-  } if (sensorValue <= FEILD_WHITE_LINE_RATIO) {
-    return FEILD_WHITE_LINE;
-  } if (sensorValue <= FEILD_GREEN_SURFACE_RATIO) {
-    return FEILD_GREEN_SURFACE;
-  } else {
-    return FEILD_GREEN_SURFACE;
-  }
-}
+    } if (sensorValue <= FEILD_WHITE_LINE_RATIO) {
+      return FEILD_WHITE_LINE;
+      } if (sensorValue <= FEILD_GREEN_SURFACE_RATIO) {
+        return FEILD_GREEN_SURFACE;
+        } else {
+          return FEILD_GREEN_SURFACE;
+        }
+      }
 
 /**
  * Routine for setting the speed for all of the motors on the robot.
  */
-void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
+ void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
   for (int i = 0; i < 4; i ++) {
     analogWrite(pwmChannel[i], motorSpeed);
   }
@@ -256,179 +244,161 @@ void setRobotSpeed(double motorSpeed, int pwmChannel[4]) {
 /**
  * hardware ish level of code development
  */
-void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
+ void setMotorDirection(thisMotorDirection motorDirection, int motorId[2], double motorSpeed) {
   setRobotSpeed(motorSpeed, pwms);
 
   switch (motorDirection) {
     case MOTOR_FORWARD:
-      digitalWrite(motorId[1], LOW);
-      digitalWrite(motorId[0], HIGH);
+    digitalWrite(motorId[1], LOW);
+    digitalWrite(motorId[0], HIGH);
     break;
 
     case MOTOR_BACKWARD:
-      digitalWrite(motorId[0], LOW);
-      digitalWrite(motorId[1], HIGH);
+    digitalWrite(motorId[0], LOW);
+    digitalWrite(motorId[1], HIGH);
     break;
 
     case MOTOR_STOP:
-      digitalWrite(motorId[0], LOW);
-      digitalWrite(motorId[1], LOW);
+    digitalWrite(motorId[0], LOW);
+    digitalWrite(motorId[1], LOW);
     break;
 
     default:
       setMotorDirection(MOTOR_STOP, motorId, motorSpeed); // The default command is motor stopped.
+    }
   }
-}
 
 /**
  * routine that sets the robot direction and speed.
  * contains the logic that tells the motor exactly what to do.
  */
-void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
+ void setRobotDirection(thisRobotDirection robotDirection, double robotSpeed) {
 
   switch (robotDirection) {
     case ROBOT_FORWARD:
-      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
+    setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+    setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+    setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+    setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
     break;
 
     case ROBOT_BACKWARD:
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
+    setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+    setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+    setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+    setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
     break;
 
     /*
      * left movements
      */
-    case ROBOT_CRAB_LEFT:
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_CRAB_LEFT:
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_STRAFE_LEFT:
-      setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_STRAFE_LEFT:
+     setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_STRAFE_LEFT_BACKWARD:
-      setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_STRAFE_LEFT_BACKWARD:
+     setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_ROTATE_LEFT:
-      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_ROTATE_LEFT:
+     setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
+     break;
 
     /*
      * right movements
      */
-    case ROBOT_CRAB_RIGHT:
-      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_CRAB_RIGHT:
+     setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_STRAFE_RIGHT:
-      setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_STRAFE_RIGHT:
+     setMotorDirection(MOTOR_FORWARD, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_STRAFE_RIGHT_BACKWARD:
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_STRAFE_RIGHT_BACKWARD:
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_ROTATE_RIGHT:
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
-    break;
+     case ROBOT_ROTATE_RIGHT:
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_BACKWARD, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_FORWARD, MOTOR_FOUR, robotSpeed);
+     break;
 
-    case ROBOT_STOP:
-      setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
-      setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
-    break;
-  }
-
-}
+     case ROBOT_STOP:
+     setMotorDirection(MOTOR_STOP, MOTOR_ONE, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_TWO, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_THREE, robotSpeed);
+     setMotorDirection(MOTOR_STOP, MOTOR_FOUR, robotSpeed);
+     break;
+   }
+ }
 
 /*
  * gets the pixy to update what objects are around it.
  */
-void scanObjects(cameraTrackingObject object) {
-int objectId;
+ void scanObjects(cameraTrackingObject object) {
+  int objectId;
 
-// Choose the object to track based on what is fed in from the loop.
-switch (object) {
-  case CMYK_CYAN_GOAL:
+  // Choose the object to track based on what is fed in from the loop.
+  switch (object) {
+    case CMYK_CYAN_GOAL:
     objectId = CMYK_CYAN_GOAL_ID;
-  break;
+    break;
 
-  case CMYK_YELLOW_GOAL:
+    case CMYK_YELLOW_GOAL:
     objectId = CMYK_YELLOW_GOAL_ID;
-  break;
+    break;
 
-  case CMYK_ORANGE_BALL:
+    case CMYK_ORANGE_BALL:
     objectId = CMYK_ORGANGE_BALL_ID;
-  break;
+    break;
 
-  default:
+    default:
     objectId = CMYK_ORGANGE_BALL_ID;
-  break;
-
-}
-  // CLANG: why is ths an error!? v
-  uint16_t blocks = pixy.getBlocks();                       // get the data from the pixy.
-  objectChoiceSignature = pixy.blocks[objectId].signature;  // get object's signature
-  objectXPos = pixy.blocks[objectId].x;                     // get x position
-  objectYPos = pixy.blocks[objectId].y;                     // get y position
-  object_width = pixy.blocks[objectId].width;               // get width
-  object_height = pixy.blocks[objectId].height;             // get height
-}
-
-/*
- * Scales the speed of the motors based on object Distance
- * This needs to be fixed! should not work the first time!.
- */
-double calculateRobotSpeed(int objectDistance, int maxObjectDistance) {
-  int div = objectDistance / maxObjectDistance; // stupid. need to get the actual distance of the ball from the robot.
-  return map(div, 0, 1000, 0, 255); // returns a scaled number 
+    break;
+  }
 }
 
  /*
   * Updated the led strips
   */
-void updateDualStrip() {
-  dualStrip.show();
-}
+  void updateDualStrip() {
+    dualStrip.show();
+  }
 
  /*
   * Sets the led strip color with rgb values.
   */
-void setDualStripColor(int r, int g, int b) {
-  for(int i = 0; i < NEO_PIXEL_PER_ROBOT; i ++) {
-    dualStrip.setPixelColor(i, r, g, b);
+  void setDualStripColor(int r, int g, int b) {
+    for(int i = 0; i < NEO_PIXEL_PER_ROBOT; i ++) {
+      dualStrip.setPixelColor(i, r, g, b);
     dualStrip.setBrightness(255); // Sets the brightness to full
   }
 }
@@ -436,22 +406,22 @@ void setDualStripColor(int r, int g, int b) {
 /**
  * sets the color with the simpler use of an enum object.
  */
-void setDualStripColor(dualStripColor color) {
+ void setDualStripColor(dualStripColor color) {
   switch(color) {
     case NOT_FOUND_COLOR:
-      setDualStripColor(NOT_FOUND_COLOR_DATA[0], NOT_FOUND_COLOR_DATA[1], NOT_FOUND_COLOR_DATA[2]);
+    setDualStripColor(NOT_FOUND_COLOR_DATA[0], NOT_FOUND_COLOR_DATA[1], NOT_FOUND_COLOR_DATA[2]);
     break;
 
     case FOUND_COLOR:
-      setDualStripColor(FOUND_COLOR_DATA[0], FOUND_COLOR_DATA[1], FOUND_COLOR_DATA[2]);
+    setDualStripColor(FOUND_COLOR_DATA[0], FOUND_COLOR_DATA[1], FOUND_COLOR_DATA[2]);
     break;
 
     case REFLECTIVE_COLOR:
-      setDualStripColor(REFLECTIVE_COLOR_DATA[0], REFLECTIVE_COLOR_DATA[1], REFLECTIVE_COLOR_DATA[2]);
+    setDualStripColor(REFLECTIVE_COLOR_DATA[0], REFLECTIVE_COLOR_DATA[1], REFLECTIVE_COLOR_DATA[2]);
     break;
 
     case LOCAL_ROBOT_ERROR_COLOR:
-      setDualStripColor(LOCAL_ROBOT_ERROR_COLOR_DATA[0], LOCAL_ROBOT_ERROR_COLOR_DATA[1], LOCAL_ROBOT_ERROR_COLOR_DATA[2]);
+    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR_DATA[0], LOCAL_ROBOT_ERROR_COLOR_DATA[1], LOCAL_ROBOT_ERROR_COLOR_DATA[2]);
     break;
   }
   updateDualStrip(); // push the new values to the strip's after the values have been set.
@@ -469,13 +439,13 @@ double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) {
     Serial.println("12C TOF SENSOR ERROR");
     setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
     return 0;
-  } else {
-    return measurementObject.RangeMilliMeter;
+    } else {
+      return measurementObject.RangeMilliMeter;
+    }
   }
-}
 
 float getGyroAngle() { // gets the angle that the gyro is facing
-  
+
   int gyro_corrected;
   int gyro_reading;
   float gyro_rate;
@@ -496,7 +466,7 @@ float getGyroAngle() { // gets the angle that the gyro is facing
   accel_angle = (float)(accel_corrected * accel_scale);
 
   gyro_reading = gy;
-  gyro_corrected = (float)((gyro_reading/131) - gyro_offset);  // 131 is sensivity of gyro from data sheet
+  gyro_corrected = (float)((gyro_reading / 131) - gyro_offset);  // 131 is sensivity of gyro from data sheet
   gyro_rate = (gyro_corrected * gyro_scale) * -loop_time;      // loop_time = 0.05 ie 50ms        
   gyro_angle = angle + gyro_rate;
 
@@ -513,37 +483,15 @@ void timeStamp() {
 }
 
 void threadRunner() {
-    scanObjects(CMYK_ORANGE_BALL);
-
-    object_area = object_width * object_height; //calculate the object area
-    maxArea = object_area + 1000;
-    minArea = object_area - 1000;
+  scanObjects(CMYK_ORANGE_BALL);
 
     // Check if the pixy has the proper object lock.
     if (objectChoiceSignature == CMYK_ORANGE_BALL) {
       setDualStripColor(FOUND_COLOR);
-      
-      object_newArea = object_width * object_height;  //calculate the object area
-      // calculate the speed for the robot
-      double speed = calculateRobotSpeed(object_newArea, maxArea);
-
-      if (objectXPos < Xmin) {                        // turn left if x position < max x position
-        setRobotDirection(ROBOT_STRAFE_LEFT, speed);
-      } else if (objectXPos > Xmax) {                 // turn right if x position > max x position
-        setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
-      } else if (object_newArea < minArea) {          // go forward if object too small
-        setRobotDirection(ROBOT_FORWARD, speed);
-        setDualStripColor(REFLECTIVE_COLOR);
-      } else if (object_newArea > maxArea) {          // go backward if object too big
-        setRobotDirection(ROBOT_BACKWARD, speed);
       } else {
-        setRobotDirection(ROBOT_STOP, LOW);           // stop the robot if it has lost sight of the ball.
+
       }
-    } else {
-        // Code to tell the other robot to step in, for now just look for the ball.
-        scanObjects(CMYK_ORANGE_BALL);
     }
-}
 
 /////////////////////////////////////////////SETUP/////////////////////////////////////////////
 void setup() {
@@ -579,7 +527,7 @@ void setup() {
 void loop() {
   // run the thread
   threadRunner();
-
+ 
   // calculate the time
   timeStamp();
 }
