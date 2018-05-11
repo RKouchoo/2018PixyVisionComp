@@ -9,7 +9,7 @@
   Emotional support: @BBlkBoi
   
   Last major edit:
-    March 28, 2018
+    May 11, 2018
   Written for SPX robotics
   Written in sublime with deviot.
 
@@ -57,10 +57,21 @@
 
 #define PIXEL_MODE NEO_GRB + NEO_KHZ800
 
+#define DEADZONE 5 // deadzone in pixels
+#define DEADZONE_STRAFE 10 // deadzone to strafe in pixels.
+
+#define FRAME_SKIP 1 // frames to skip in the next loop.
+
 Pixy pixy; // Create a pixy object
 Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, PIXEL_MODE); // create the object for interfacing both of the LED bars.
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
 MPU6050 gyro = MPU6050();
+
+static int frameCount = 0;
+int cameraWatchDogCount = 0;
+static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the robot.
+boolean isCameraFlipped = true;
+
 
 /**
  * Gyro variables
@@ -482,16 +493,77 @@ void timeStamp() {
   last_cycle = millis();
 }
 
-void threadRunner() {
-  scanObjects(CMYK_ORANGE_BALL);
+int average(int a, int b){
+  return (a + b) / 2;
+}
 
-    // Check if the pixy has the proper object lock.
-    if (objectChoiceSignature == CMYK_ORANGE_BALL) {
-      setDualStripColor(FOUND_COLOR);
+int averageObjectX() {
+  return 160-average(pixy.blocks[0].x, pixy.blocks[1].x);
+}
+
+void handleRobotMovement(int speed) {
+
+    // the ball is on the left side
+    if (averageObjectX() > DEADZONE * (isCameraFlipped ? 1 : -1)){
+      if (averageObjectX() > DEADZONE_STRAFE * (isCameraFlipped ? 1 : -1)) {
+          // move backward a little then strafe left (90deg) 
+          setRobotDirection(ROBOT_CRAB_LEFT, speed);
+          } else {
+          // diag left
+          setRobotDirection(ROBOT_STRAFE_LEFT, speed);
+        }
+
+        } else if (averageObjectX() < DEADZONE * (isCameraFlipped ? -1 : 1)) {
+          Serial.println("turn right");
+          if (averageObjectX() > DEADZONE_STRAFE * (isCameraFlipped ? -1 : 1)) {
+        // move backward a little then strafe right (90deg) 
+        setRobotDirection(ROBOT_CRAB_RIGHT, speed);
+        } else {
+        // diag right
+        setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
+      }
+      
       } else {
+        Serial.println("go straight");
 
+      // ball should be in the centre of the dead zone pixels, 
+      // so the robot should be able to move straight.
+
+    }
+  }
+
+  void threadRunner() {
+  uint16_t pixyBlocks = pixy.getBlocks(); // get the object that the pixy can see.
+  int speed = 100;
+
+  if (pixyBlocks) {
+    frameCount++;
+    cameraWatchDogCount = 0;
+    } else {
+      cameraWatchDogCount++;
+    }
+
+    // wait for %frameskip frames
+    if (frameCount % FRAME_SKIP == 0) {
+      if (pixyBlocks == 2) { // goal or ball.
+        handleRobotMovement(speed);
+        frameCount = 1;
+      } else {
+        frameCount = 1;
+        setRobotDirection(ROBOT_STOP, speed);      
       }
     }
+
+    if (cameraWatchDogCount == cameraWatchDogCountMax){
+      Serial.println("Pixy has no blocks !");
+
+      // do rf communication to the other robot here.
+
+      // stop the robot or move backward slowly.
+      // possibly turn around to locate the ball and then rotate back and go to it,
+      // by setting an 'imaginary' averageX() value that the robot can head to.
+    }
+  }
 
 /////////////////////////////////////////////SETUP/////////////////////////////////////////////
 void setup() {
@@ -527,7 +599,7 @@ void setup() {
 void loop() {
   // run the thread
   threadRunner();
- 
+
   // calculate the time
   timeStamp();
 }
