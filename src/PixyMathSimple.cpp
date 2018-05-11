@@ -1,3 +1,5 @@
+/* simple math and movement code that works for the arduino and pixy TODO: tweak code to work with new fish eye lenses */
+
 #include <SPI.h>  
 #include <Pixy.h>
 
@@ -84,15 +86,12 @@ void turnRobot(){
     Serial.println(averageX());
     if (averageX() > DEADZONE){
       Serial.println("turn left");
-      digitalWrite(TurnLeft, HIGH);
-      digitalWrite(TurnRight, LOW);
+      
     } else if (averageX() < DEADZONE*-1) {
       Serial.println("turn right");
-      digitalWrite(TurnLeft, LOW);
-      digitalWrite(TurnRight, HIGH);
+      
     } else {
       Serial.println("go straight");
-      digitalWrite(TurnLeft, HIGH);
-      digitalWrite(TurnRight, HIGH);
+      
     }
 }
