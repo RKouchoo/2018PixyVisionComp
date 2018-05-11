@@ -454,7 +454,6 @@ void setDualStripColor(dualStripColor color) {
       setDualStripColor(LOCAL_ROBOT_ERROR_COLOR_DATA[0], LOCAL_ROBOT_ERROR_COLOR_DATA[1], LOCAL_ROBOT_ERROR_COLOR_DATA[2]);
     break;
   }
-
   updateDualStrip(); // push the new values to the strip's after the values have been set.
 }
 
@@ -547,9 +546,8 @@ void threadRunner() {
 
 /////////////////////////////////////////////SETUP/////////////////////////////////////////////
 void setup() {
-  // Start serial communication
+  // Start communication interfaces 
   Serial.begin(SERIAL_BANDWIDTH);
-
   Wire.begin();
 
   // set up hardware
