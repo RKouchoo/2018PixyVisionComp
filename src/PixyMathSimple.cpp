@@ -1,11 +1,16 @@
 /* simple math and movement code that works for the arduino and pixy TODO: tweak code to work with new fish eye lenses */
 
+// WARN: Much of this may need to be changed based on how the camera is mounted to the robot.
+
 #include <SPI.h>  
 #include <Pixy.h>
 
 #define DEADZONE 5 //deadzone in pixels
+#define DEADZONE_STRAFE 10 // deadzone to strafe.
 
-int TurnLeft = 13;
+#define FRAME_SKIP 1 // wait one frame to run the next loop
+
+int TurnLeft = 13; 
 int TurnRight = 12;
 
 
@@ -13,7 +18,7 @@ int TurnRight = 12;
 Pixy pixy;
 
 int watchDog = 0;
-int watchDogMax = 1000;
+int watchDogMax = 1000; // 1000 failed tries of connecting to the camera or sensing the robot.
 
 void setup(){
   Serial.begin(9600);
@@ -40,58 +45,77 @@ void loop() {
     watchDog++;
   }
 
-  //every 50 frames
-  if (i%50 == 0){
-    if (blocks == 2){ //gear or shoot
+  // wait for %frameskip frames
+  if (i%FRAME_SKIP == 0){
+    if (blocks == 2){ // goal or ball.
       Serial.print(distance());
-      Serial.println(" ft");
-      turnRobot();
+       turnRobot();
       i = 1;
     } else {
-      Serial.println("Rope??");
       i = 1;
-      digitalWrite(TurnLeft, LOW);
-      digitalWrite(TurnRight, LOW);
-    }
+      // stop the robot     
+
+      }
   }
 
   if (watchDog == watchDogMax){
     Serial.println("No Blocks");
-    digitalWrite(TurnLeft, LOW);
-    digitalWrite(TurnRight, LOW);
+    
+    // do rf communication to the other robot here.
+
+    // stop the robot or move backward slowly.
+    // possibly turn around to locate the ball and then rotate back and go to it,
+    // setting an 'imaginary' averageX() value that the robot can head to.
   }
 }
 
 int average(int a, int b){
-  return (a+b)/2;
+  return (a+b) / 2;
 }
-int averageX(){
+
+int averageX() {
   return 160-average(pixy.blocks[0].x, pixy.blocks[1].x);
 }
-int averageY(){
+
+int averageY() {
   return 100-average(pixy.blocks[0].y, pixy.blocks[1].y);
 }
-int wholeWidth(){
+
+int wholeWidth() {
   if (pixy.blocks[0].x > pixy.blocks[1].x){
     return (pixy.blocks[0].x-(pixy.blocks[0].width/2))-(pixy.blocks[1].x+(pixy.blocks[1].width/2));
   } else {
     return (pixy.blocks[1].x-(pixy.blocks[1].width/2))-(pixy.blocks[0].x+(pixy.blocks[0].width/2));
   }
 }
-double distance(){
-  return 1/(((8.006*pow(10,-3))*wholeWidth())+(8.664*pow(10,-4)));
+
+double distance() { // in feet
+  return 1 / (((8.006 * pow(10,-3)) * wholeWidth()) + (8.664 * pow(10,-4)));
 }
 
-void turnRobot(){
+void turnRobot() {
     Serial.println(averageX());
     if (averageX() > DEADZONE){
       Serial.println("turn left");
-      
+      if (averageX() > DEADZONE_STRAFE) {
+          // move backward a little then strafe left (90deg) 
+        } else {
+          // diag left
+        }
+
     } else if (averageX() < DEADZONE*-1) {
       Serial.println("turn right");
+      if (averageX() > DEADZONE_STRAFE*-1) {
+        // move backward a little then strafe right (90deg) 
+        } else {
+        // diag right
+        }
       
     } else {
       Serial.println("go straight");
       
+      // ball should be in the centre of the dead zone pixels, 
+      // so the robot should be able to move straight.
+
     }
 }
