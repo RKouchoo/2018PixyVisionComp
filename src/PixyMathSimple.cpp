@@ -32,7 +32,6 @@ void setup(){
 
 void loop() {
   static int i = 0;
-  int j;
   uint16_t blocks;
   
   // grab blocks!
@@ -48,7 +47,7 @@ void loop() {
   // wait for %frameskip frames
   if (i%FRAME_SKIP == 0){
     if (blocks == 2){ // goal or ball.
-      Serial.print(distance());
+      //Serial.print(distance());
        turnRobot();
       i = 1;
     } else {
@@ -70,27 +69,11 @@ void loop() {
 }
 
 int average(int a, int b){
-  return (a+b) / 2;
+  return (a + b) / 2;
 }
 
 int averageX() {
   return 160-average(pixy.blocks[0].x, pixy.blocks[1].x);
-}
-
-int averageY() {
-  return 100-average(pixy.blocks[0].y, pixy.blocks[1].y);
-}
-
-int wholeWidth() {
-  if (pixy.blocks[0].x > pixy.blocks[1].x){
-    return (pixy.blocks[0].x-(pixy.blocks[0].width/2))-(pixy.blocks[1].x+(pixy.blocks[1].width/2));
-  } else {
-    return (pixy.blocks[1].x-(pixy.blocks[1].width/2))-(pixy.blocks[0].x+(pixy.blocks[0].width/2));
-  }
-}
-
-double distance() { // in feet
-  return 1 / (((8.006 * pow(10,-3)) * wholeWidth()) + (8.664 * pow(10,-4)));
 }
 
 void turnRobot() {

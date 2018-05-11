@@ -457,6 +457,7 @@ void setDualStripColor(dualStripColor color) {
   updateDualStrip(); // push the new values to the strip's after the values have been set.
 }
 
+
 VL53L0X_RangingMeasurementData_t measureTOFDistance() { // gets the measurement object from the adafruit library.
   VL53L0X_RangingMeasurementData_t measurementObject;
   timeOfFlight.rangingTest(&measurementObject, false);  
