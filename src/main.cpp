@@ -502,8 +502,23 @@ int averageObjectX() {
   return 160 - average(pixy.blocks[0].x, pixy.blocks[1].x);
 }
 
-void handleRobotMovement(int speed) {
+int wholeWidth() {
+  if (pixy.blocks[0].x > pixy.blocks[1].x){
+    return (pixy.blocks[0].x-(pixy.blocks[0].width/2))-(pixy.blocks[1].x+(pixy.blocks[1].width/2));
+  } else {
+    return (pixy.blocks[1].x-(pixy.blocks[1].width/2))-(pixy.blocks[0].x+(pixy.blocks[0].width/2));
+  }
+}
 
+double distance() { // in feet
+  return 1 / (((8.006 * pow(10,-3)) * wholeWidth()) + (8.664 * pow(10,-4)));
+}
+
+int calcRobotSpeed() {
+  return map(distance(), 0, 20, 0, 255) * 5;
+}
+
+void handleRobotMovement(int speed) {
   // the ball is on the left side
   if (averageObjectX() > DEADZONE * (isCameraFlipped ? 1 : -1)) {
     if (averageObjectX() > DEADZONE_STRAFE * (isCameraFlipped ? 1 : -1)) {
@@ -526,16 +541,15 @@ void handleRobotMovement(int speed) {
 
   } else {
     Serial.println("go straight");
-
+    setRobotDirection(ROBOT_FORWARD, speed);
     // ball should be in the centre of the dead zone pixels, 
     // so the robot should be able to move straight.
-
   }
 }
 
 void threadRunner() {
   uint16_t pixyBlocks = pixy.getBlocks(); // get the object that the pixy can see.
-  int speed = 100;
+  int speed = calcRobotSpeed();
 
   if (pixyBlocks) {
     frameCount++;
