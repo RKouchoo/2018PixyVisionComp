@@ -6,12 +6,13 @@
   /\__/ / |   / /^\ \   | \__/\_| |_| |\ \ | \__/\ |_| |_| |_  | |   | |_/ / |\ \| |___| | | || |\  \| |___| |\ \ /\__/ /
   \____/\_|   \/   \/    \____/\___/\_| \_| \____/\___/ \___/  \_/   \____/\_| \_\____/\_| |_/\_| \_/\____/\_| \_|\____/
   Author: @RKouchoo
-  Emotional support: @BBlkBoi
+  SubAuthor: @Oliver
+  Emotional support: @BBlkBoi (James)
   
   Last major edit:
-    May 11, 2018
+    August 8, 2018
   Written for SPX robotics
-  Written in sublime with deviot.
+  Written in sublime with deviot and a mix an mash of other IDE's....
 
   Robot motor layout diagram
   
@@ -73,7 +74,7 @@ MPU6050 gyro = MPU6050();
 
 static int frameCount = 0;
 int cameraWatchDogCount = 0;
-static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the robot.
+static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the ball.
 boolean isCameraFlipped = true;
 
 
@@ -124,10 +125,10 @@ static int LOCAL_ROBOT_ERROR_COLOR_DATA[3] = {237, 148, 90}; // error orange, sh
 /**
  * The arrays that collect the data for automated setup routines.
  */
- static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
- static int motors[2][4] = {
-  {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]},  // forward channels
-  {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]}  // backward channels
+static int pwms[4] = {MOTOR_ONE_PWM, MOTOR_TWO_PWM, MOTOR_THREE_PWM, MOTOR_FOUR_PWM};
+static int motors[2][4] = {
+ {MOTOR_ONE[0], MOTOR_TWO[0], MOTOR_THREE[0], MOTOR_FOUR[0]},  // forward channels
+ {MOTOR_ONE[1], MOTOR_TWO[1], MOTOR_THREE[1], MOTOR_FOUR[1]}  // backward channels
 };
 
 /**
@@ -200,7 +201,7 @@ void initMotorConfig(int motorList[2][4]) {
     for (int j = 0; j < secondLength; j++) {
       if (!motorList[i][j]) {
         pinMode(OUTPUT, motorList[i][j]);
-        Serial.println("Registered motors: " + motorList[i][j]);
+        Serial.println("Registered motor: " + motorList[i][j]);
       }
     }
   }
@@ -596,14 +597,14 @@ void threadRunner() {
 unsigned int cbRFPulse = 0;
 
 typedef struct cbRFPacket {
-  bool robotIsMaster = ROBOT_IS_MASTER;
+  boolean robotIsMaster = ROBOT_IS_MASTER;
   int orientation;
-  bool ballVisible;
-  bool hasBall;
+  boolean ballVisible;
+  boolean hasBall;
 };
 
 RF24 radio(RF_CE, RF_CSN);
-const uint64_t rfPipes[2] = { 0xF0F0F0F0F011, 0xF0F0F0F022 };
+const uint64_t rfPipes[2] = {0xF0F0F0F0F011, 0xF0F0F0F022};
 
 cbRFPacket txPacket;
 cbRFPacket rxPacket;
@@ -611,7 +612,7 @@ cbRFPacket rxPacket;
 void initCBRF() {
   radio.begin();
   //radio.setPALevel(RF24_PA_LOW);
-  //radio.setPALevel(RF24_PA_HIGH);
+  radio.setPALevel(RF24_PA_HIGH);
   radio.setChannel(0x2A);
   if (ROBOT_IS_MASTER) {
     radio.openWritingPipe(rfPipes[0]);
@@ -665,9 +666,14 @@ void setup() {
   Serial.begin(SERIAL_BANDWIDTH);
   Wire.begin();
 
-  // set up hardware
+  //// set up hardware
+  
+  // init core devices
   pixy.init();
   gyro.initialize();
+  timeOfFlight.begin();
+
+  // init "factory" devices
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
   initLightSensorConfig(lightSensors);
