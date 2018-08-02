@@ -13,7 +13,6 @@
 int TurnLeft = 13; 
 int TurnRight = 12;
 
-
 // This is the main Pixy object 
 Pixy pixy;
 
@@ -53,7 +52,6 @@ void loop() {
     } else {
       i = 1;
       // stop the robot     
-
       }
   }
 
