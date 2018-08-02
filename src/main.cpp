@@ -26,7 +26,7 @@
 
   TODO List:
    - Implement gyro code.
-   - Implement RF communication.
+   - Implement RF communication. (Being worked on)
    - field is spelt as feild (auto fillout)
    
   RF204L01 module guide:
@@ -47,10 +47,14 @@
 #include <I2Cdev.h>
 #include <MPU6050.h>
 
+#define ROBOT_IS_MASTER true ///////////////////////// IMPORTANT FOR RF MASTER/SLAVE, INCLUDE MENU SCREEN or JUMPER???
+
 #define SERIAL_BANDWIDTH 9600
 #define NEO_PIXEL_PER_ROBOT 16
 #define DUAL_NEO_PIN 12
 #define RF_PIN 22
+#define RF_CE 7 ///////////////////////////////////// PLEASE CHECK WITH PINS ON MODULE AND MEGA
+#define RF_CSN 8 ///////////////////////////////////// PLEASE CHECK WITH PINS ON MODULE AND MEGA
 
 #define GYRO_LOW_ADDRES 0x68 // depends on how I configure the robot.
 #define GYRO_HIGH_ADDRES 0x69
@@ -492,6 +496,11 @@ void timeStamp() {
   // once loop cycle reaches 50ms, reset timer value and continue
   cycle_time = millis() - last_cycle;
   last_cycle = millis();
+
+  //call information transmission
+  if (ROBOT_IS_MASTER) {
+    cbRFPulse = cbRFPulse + 1;
+  }
 }
 
 int average(int a, int b) {
@@ -580,6 +589,76 @@ void threadRunner() {
   }
 }
 
+/////////////////////////////////////////////RADIO/////////////////////////////////////////////
+
+// Basic protocol for Bi-Directional Communications
+
+unsigned int cbRFPulse = 0;
+
+typedef struct cbRFPacket {
+  bool robotIsMaster = ROBOT_IS_MASTER;
+  int orientation;
+  bool ballVisible;
+  bool hasBall;
+};
+
+RF24 radio(RF_CE, RF_CSN);
+const uint64_t rfPipes[2] = { 0xF0F0F0F0F011, 0xF0F0F0F022 };
+
+cbRFPacket txPacket;
+cbRFPacket rxPacket;
+
+void initCBRF() {
+  radio.begin();
+  //radio.setPALevel(RF24_PA_LOW);
+  //radio.setPALevel(RF24_PA_HIGH);
+  radio.setChannel(0x2A);
+  if (ROBOT_IS_MASTER) {
+    radio.openWritingPipe(rfPipes[0]);
+    radio.openReadingPipe(1, rfPipes[1]);
+  } else {
+    radio.openWritingPipe(rfPipes[1]);
+    radio.openReadingPipe(1, rfPipes[0]);
+  }
+  radio.powerUp();
+  radio.startListening();
+};
+
+void cbRFTransmit() {
+  radio.stopListening();
+  // examples for txPacket information sending
+  // txPacket.orientation = readOrientation()
+  // txPacket.ballVisible = canPixySeeBall()
+  // txPacket.hasBall = doIOwnTheBall()
+  radio.write( &txPacket, sizeof(txPacket) );
+  radio.startListening();
+}
+
+void cbRFReceive() {
+  radio.read( &rxPacket, sizeof(rxPacket) );
+  //Serial.println(rxPacket.robotIsMaster);
+};
+
+void cbRFThread() {
+  // every 100ms assuming timestamp pulse produces program 'clock' of 50ms
+  if (ROBOT_IS_MASTER) {
+      if (cbRFPulse >= 2) {
+        // >=2 means every second timestamp() pulse provided cbRFThread is called before timestamp(); else use >2 if after timestamp()
+        cbRFPulse = 0;
+        cbRFTransmit();
+      }
+      if (radio.available()) {
+        cbRFReceive();
+      }
+  } else {
+      if (radio.available()) {
+        cbRFReceive();
+        cbRFTransmit();
+      }
+  }
+};
+
+
 /////////////////////////////////////////////SETUP/////////////////////////////////////////////
 void setup() {
   // Start communication interfaces 
@@ -592,6 +671,7 @@ void setup() {
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
   initLightSensorConfig(lightSensors);
+  initCBRF(); // Initialize Radios, dependant on ROBOT_IS_MASTER constant
 
   dualStrip.begin();
   dualStrip.show(); // Initialize all pixels to 'off'
@@ -615,6 +695,10 @@ void loop() {
   // run the thread
   threadRunner();
 
+  // run the radio functions and listen/transmit data
+  cbRFThread();
+
   // calculate the time
+  // every 2 times timeStamp() is called, the MASTER robot transmits to SLAVE robot and gets a response for CBRFPackets
   timeStamp();
 }
