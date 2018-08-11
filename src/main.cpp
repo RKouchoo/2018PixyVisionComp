@@ -45,7 +45,8 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <I2Cdev.h>
-#include <HMC5883L.h>
+#include <QMC5883L.h>
+#include <LiquidCrystal_I2C.h>
 
 #define ROBOT_IS_MASTER true ///////////////////////// IMPORTANT FOR RF MASTER/SLAVE, INCLUDE MENU SCREEN or JUMPER???
 
@@ -56,9 +57,6 @@
 #define RF_CE 7 ///////////////////////////////////// PLEASE CHECK WITH PINS ON MODULE AND MEGA
 #define RF_CSN 8 ///////////////////////////////////// PLEASE CHECK WITH PINS ON MODULE AND MEGA
 
-#define GYRO_LOW_ADDRES 0x68 // depends on how I configure the robot.
-#define GYRO_HIGH_ADDRES 0x69
-
 #define DEADZONE 5 // deadzone in pixels
 #define DEADZONE_STRAFE 10 // deadzone to strafe in pixels.
 
@@ -66,14 +64,13 @@
 
 Pixy pixy; // Create a pixy object
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
-HMC5883L compass;
+LiquidCrystal_I2C display(0x3F, 16, 2);
+QMC5883L compass;
 
 static int frameCount = 0;
 int cameraWatchDogCount = 0;
 static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the ball.
-boolean isCameraFlipped = true;
-
-int16_t compass_mx, compass_my, compass_mz;
+boolean isCameraFlipped = true; // the camera is mounted upside down on the robots.
 
 /**
  * Gyro variables
@@ -365,19 +362,9 @@ void handleRobotMovement(int speed) {
   }
 }
 
-void getCompassData() {
-  compass.getHeading(&compass_mx, &compass_my, &compass_mz); // grabs the latest data from the compass
-}
-
 // after getting the compass data, convert it to a heading
-float getCompassHeading() {
-  getCompassData();
-
-  float heading = atan2(compass_my, compass_mx);
-  if(heading < 0)
-  heading += 2 * M_PI;
-  // blink LED to indicate activity
-  return heading * 180 / M_PI;
+int getCompassHeading() {
+  return compass.readHeading();
 }
 
 void threadRunner() {
@@ -504,12 +491,17 @@ void setup() {
   Serial.begin(SERIAL_BANDWIDTH);
   Wire.begin();
 
+  display.begin();
+  //display.backlight();
+  display.blink();
+
+
   //// set up hardware
 
   // init core devices
   pixy.init();
   timeOfFlight.begin();
-  compass.initialize();
+  compass.init();
 
   // init "factory" devices
   initMotorPwmConfig(pwms);
@@ -521,23 +513,23 @@ void setup() {
     Serial.println(F("Failed to boot VL53L0X"));
   }
 
-  if(!compass.testConnection()) {
-    Serial.println(F("Failed to boot HMC5883L"));
-  }
-
   // make sure the robot is not moving until  loop runs
   setRobotDirection(ROBOT_STOP, 0);
 }
 
 /////////////////////////////////////////////LOOP/////////////////////////////////////////////
 void loop() {
+    display.print(getCompassHeading());
+    delay(50);
+    display.clear();
+    //Serial.println("updating");
   // run the thread
-  threadRunner();
+//  threadRunner();
 
   // run the radio functions and listen/transmit data
-  cbRFThread();
+  //cbRFThread();
 
   // calculate the time
   // every 2 times timeStamp() is called, the MASTER robot transmits to SLAVE robot and gets a response for CBRFPackets
-  timeStamp();
+  //timeStamp();
 }
