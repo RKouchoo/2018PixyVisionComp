@@ -41,12 +41,11 @@
 
 // "Custom" libraries
 #include <Pixy.h>
-#include <Adafruit_NeoPixel.h>
 #include <Adafruit_VL53L0X.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <I2Cdev.h>
-#include <MPU6050.h>
+#include <HMC5883L.h>
 
 #define ROBOT_IS_MASTER true ///////////////////////// IMPORTANT FOR RF MASTER/SLAVE, INCLUDE MENU SCREEN or JUMPER???
 
@@ -60,8 +59,6 @@
 #define GYRO_LOW_ADDRES 0x68 // depends on how I configure the robot.
 #define GYRO_HIGH_ADDRES 0x69
 
-#define PIXEL_MODE NEO_GRB + NEO_KHZ800
-
 #define DEADZONE 5 // deadzone in pixels
 #define DEADZONE_STRAFE 10 // deadzone to strafe in pixels.
 
@@ -69,11 +66,14 @@
 
 Pixy pixy; // Create a pixy object
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
+HMC5883L compass;
 
 static int frameCount = 0;
 int cameraWatchDogCount = 0;
 static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the ball.
 boolean isCameraFlipped = true;
+
+int16_t compass_mx, compass_my, compass_mz;
 
 /**
  * Gyro variables
@@ -365,9 +365,26 @@ void handleRobotMovement(int speed) {
   }
 }
 
+void getCompassData() {
+  compass.getHeading(&compass_mx, &compass_my, &compass_mz); // grabs the latest data from the compass
+}
+
+// after getting the compass data, convert it to a heading
+float getCompassHeading() {
+  getCompassData();
+
+  float heading = atan2(compass_my, compass_mx);
+  if(heading < 0)
+  heading += 2 * M_PI;
+  // blink LED to indicate activity
+  return heading * 180 / M_PI;
+}
+
 void threadRunner() {
   uint16_t pixyBlocks = pixy.getBlocks(); // get the object that the pixy can see.
   int speed = calcRobotSpeed();
+
+  float compassHeading = getCompassHeading();
 
   if (pixyBlocks) {
     frameCount++;
@@ -492,6 +509,7 @@ void setup() {
   // init core devices
   pixy.init();
   timeOfFlight.begin();
+  compass.initialize();
 
   // init "factory" devices
   initMotorPwmConfig(pwms);
@@ -503,7 +521,11 @@ void setup() {
     Serial.println(F("Failed to boot VL53L0X"));
   }
 
-  // make sure the robot is not moving until loop runs
+  if(!compass.testConnection()) {
+    Serial.println(F("Failed to boot HMC5883L"));
+  }
+
+  // make sure the robot is not moving until  loop runs
   setRobotDirection(ROBOT_STOP, 0);
 }
 
