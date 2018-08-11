@@ -1,0 +1,19 @@
+int pwm1 = 8;
+int pwm2 = 9;
+int pwm3 = 10;
+int pwm4 = 11;
+
+void setup() {
+  pinMode(pwm1, OUTPUT);
+  pinMode(pwm2, OUTPUT);
+  pinMode(pwm3, OUTPUT);
+  pinMode(pwm4, OUTPUT);
+}
+
+void loop() {
+  analogWrite(pwm1, 255);
+  analogWrite(pwm2, 255);
+  analogWrite(pwm3, 255);
+  analogWrite(pwm4, 255);
+
+}

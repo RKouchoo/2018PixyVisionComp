@@ -68,15 +68,12 @@
 #define FRAME_SKIP 1 // frames to skip in the next loop.
 
 Pixy pixy; // Create a pixy object
-Adafruit_NeoPixel dualStrip = Adafruit_NeoPixel(NEO_PIXEL_PER_ROBOT, DUAL_NEO_PIN, PIXEL_MODE); // create the object for interfacing both of the LED bars.
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
-MPU6050 gyro = MPU6050();
 
 static int frameCount = 0;
 int cameraWatchDogCount = 0;
 static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the ball.
 boolean isCameraFlipped = true;
-
 
 /**
  * Gyro variables
@@ -308,24 +305,9 @@ VL53L0X_RangingMeasurementData_t measureTOFDistance() { // gets the measurement 
 double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) { // gets the distance from the measured object to the robot.
   if (measurementObject.RangeStatus == 4) {
     Serial.println("12C TOF SENSOR ERROR");
-    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
     return 0;
   } else {
     return measurementObject.RangeMilliMeter;
-  }
-}
-
-void timeStamp() {
-  while ((millis() - last_cycle) < 50) {
-    delay(1);
-  }
-  // once loop cycle reaches 50ms, reset timer value and continue
-  cycle_time = millis() - last_cycle;
-  last_cycle = millis();
-
-  //call information transmission
-  if (ROBOT_IS_MASTER) {
-    cbRFPulse = cbRFPulse + 1;
   }
 }
 
@@ -349,6 +331,7 @@ double distance() { // in feet
   return 1 / (((8.006 * pow(10,-3)) * wholeWidth()) + (8.664 * pow(10,-4)));
 }
 
+// DOES NOT WORK!
 int calcRobotSpeed() {
   return map(distance(), 0, 20, 0, 255) * 5;
 }
@@ -484,6 +467,19 @@ void cbRFThread() {
   }
 };
 
+void timeStamp() {
+  while ((millis() - last_cycle) < 50) {
+    delay(1);
+  }
+  // once loop cycle reaches 50ms, reset timer value and continue
+  cycle_time = millis() - last_cycle;
+  last_cycle = millis();
+
+  //call information transmission
+  if (ROBOT_IS_MASTER) {
+    cbRFPulse = cbRFPulse + 1;
+  }
+}
 
 /////////////////////////////////////////////SETUP/////////////////////////////////////////////
 void setup() {
@@ -495,26 +491,16 @@ void setup() {
 
   // init core devices
   pixy.init();
-  gyro.initialize();
   timeOfFlight.begin();
 
   // init "factory" devices
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
-  initLightSensorConfig(lightSensors);
   initCBRF(); // Initialize Radios, dependant on ROBOT_IS_MASTER constant
 
-  dualStrip.begin();
-  dualStrip.show(); // Initialize all pixels to 'off'
 
   if (!timeOfFlight.begin()) { // only complain if its not working.
     Serial.println(F("Failed to boot VL53L0X"));
-    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
-  }
-
-  if (!gyro.testConnection()) { // only complain if its not working.
-    Serial.println(F("Failed to boot MPU6050"));
-    setDualStripColor(LOCAL_ROBOT_ERROR_COLOR);
   }
 
   // make sure the robot is not moving until loop runs
