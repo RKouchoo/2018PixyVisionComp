@@ -51,16 +51,13 @@
 #define ROBOT_IS_MASTER true ///////////////////////// IMPORTANT FOR RF MASTER/SLAVE, INCLUDE MENU SCREEN or JUMPER???
 
 #define SERIAL_BANDWIDTH 9600
-#define NEO_PIXEL_PER_ROBOT 16
-#define DUAL_NEO_PIN 12
 #define RF_PIN 22
 #define RF_CE 7 ///////////////////////////////////// PLEASE CHECK WITH PINS ON MODULE AND MEGA
 #define RF_CSN 8 ///////////////////////////////////// PLEASE CHECK WITH PINS ON MODULE AND MEGA
 
-#define DEADZONE 5 // deadzone in pixels
-#define DEADZONE_STRAFE 10 // deadzone to strafe in pixels.
-
 #define FRAME_SKIP 1 // frames to skip in the next loop.
+
+#define BALL_TRACKING_NUM 0
 
 Pixy pixy; // Create a pixy object
 Adafruit_VL53L0X timeOfFlight = Adafruit_VL53L0X(); // Create a time of flight sensor object.
@@ -69,20 +66,21 @@ QMC5883L compass;
 
 static int frameCount = 0;
 int cameraWatchDogCount = 0;
-static int cameraWatchDogCountMax = 1000; // 1000 failed tries of connecting to the camera or sensing the ball.
+static int cameraWatchDogCountMax = 25; // 1000 failed tries of connecting to the camera or sensing the ball.
 boolean isCameraFlipped = true; // the camera is mounted upside down on the robots.
+uint16_t currentObjectSignature = 0;
 
-/**
- * Gyro variables
- */
-// accelerometer values
-int accel_offset = 200;
-float accel_scale = 1; // set to 0.01
+// TODO flip these if the camera is flipped!
+static int xMaxCoord = 319; // 1 is the respective minimum for both coordinates
+static int xMidCoord = 159; // almost half way
+static int xCentreZone = 30; // 30 pixels where the centre zone of the robot is
+// keft and right threshold cutoff values
+static int xLeft = xMaxCoord - xCentreZone / 2;
+static int xRight = xMaxCoord - xCentreZone / 2;
 
-// gyro values
-int gyro_offset = 151; // 151
-float gyro_scale = 0.02; // 0.02 by default - tweak as required
-float angle = 0.00; // value to hold final calculated gyro angle
+// not needed at the moment as we can base movement off the x axis
+static int yMaxCoord = 199;
+static int yMidCoord = 100;
 
 // time stamp variables
 float loop_time = 0.05; // 50ms loop
@@ -99,10 +97,10 @@ static int MOTOR_TWO[2] = {1, 2};
 static int MOTOR_THREE[2] = {1, 2};
 static int MOTOR_FOUR[2] = {1, 2};
 
-static int MOTOR_ONE_PWM = 1;
-static int MOTOR_TWO_PWM = 1;
-static int MOTOR_THREE_PWM = 1;
-static int MOTOR_FOUR_PWM = 1;
+static int MOTOR_ONE_PWM = 8;
+static int MOTOR_TWO_PWM = 9;
+static int MOTOR_THREE_PWM = 10;
+static int MOTOR_FOUR_PWM = 11;
 
 /**
  * The arrays that collect the data for automated setup routines.
@@ -308,57 +306,73 @@ double getTOFDistanceMilli(VL53L0X_RangingMeasurementData_t measurementObject) {
   }
 }
 
-int average(int a, int b) {
-  return (a + b) / 2;
+// DOES NOT WORK!
+int calcRobotSpeed() {
+  return 200; // medium to high speed, will work and we dont need to modulate speed anyway
 }
 
-int averageObjectX() {
-  return 160 - average(pixy.blocks[0].x, pixy.blocks[1].x);
-}
+// TODO prams need to be tuned at home and on the feild !
+boolean processCoords(int width, int height, int x, int y) {
+  int maxWidth = 70;
+  int maxHeight = 70;
+  int minWidth = 30;
+  int minHeight = 30;
 
-int wholeWidth() {
-  if (pixy.blocks[0].x > pixy.blocks[1].x){
-    return (pixy.blocks[0].x-(pixy.blocks[0].width/2))-(pixy.blocks[1].x+(pixy.blocks[1].width/2));
+  if (width < maxWidth && width > minWidth && height < maxHeight && height > minHeight) {
+    return true;
   } else {
-    return (pixy.blocks[1].x-(pixy.blocks[1].width/2))-(pixy.blocks[0].x+(pixy.blocks[0].width/2));
+    return false;
   }
 }
 
-double distance() { // in feet
-  return 1 / (((8.006 * pow(10,-3)) * wholeWidth()) + (8.664 * pow(10,-4)));
-}
+boolean handleRobotMovement(int speed, uint16_t signature) {
+  currentObjectSignature = signature;
 
-// DOES NOT WORK!
-int calcRobotSpeed() {
-  return map(distance(), 0, 20, 0, 255) * 5;
-}
+  if (currentObjectSignature != BALL_TRACKING_NUM) {
+    Serial.println("Invalid target found..");
+    return;
+  }
 
-void handleRobotMovement(int speed) {
-  // the ball is on the left side
-  if (averageObjectX() > DEADZONE * (isCameraFlipped ? 1 : -1)) {
-    if (averageObjectX() > DEADZONE_STRAFE * (isCameraFlipped ? 1 : -1)) {
-      // move backward a little then strafe left (90deg)
-      setRobotDirection(ROBOT_CRAB_LEFT, speed);
-    } else {
-      // diag left
-      setRobotDirection(ROBOT_STRAFE_LEFT, speed);
+  int x = pixy.blocks[BALL_TRACKING_NUM].x;
+  int y = pixy.blocks[BALL_TRACKING_NUM].y;
+  // dont really need to be used
+  int width = pixy.blocks[BALL_TRACKING_NUM].width;
+  int height = pixy.blocks[BALL_TRACKING_NUM].height;
+
+  // check if the pixy has locked to a valid object
+  // can cause issues!
+  if (processCoords(width, height, x, y)) {
+    // the ball is on the left side
+    if (x < xLeft) {
+      if (x < xLeft / 2) { // if the ball is in the lower half of the left fov then crab
+        // crab left
+        setRobotDirection(ROBOT_CRAB_LEFT, speed);
+      } else {
+        // forward diag left till the ball goes into the middle dead zone.
+        setRobotDirection(ROBOT_STRAFE_LEFT, speed);
+      }
+
     }
 
-  } else if (averageObjectX() < DEADZONE * (isCameraFlipped ? -1 : 1)) {
-    Serial.println("turn right");
-    if (averageObjectX() > DEADZONE_STRAFE * (isCameraFlipped ? -1 : 1)) {
-      // move backward a little then strafe right (90deg)
-      setRobotDirection(ROBOT_CRAB_RIGHT, speed);
-    } else {
-      // diag right
-      setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
+    // if the ball is in the right size
+    if (x < xRight) { // if the ball is on the right side of the dead zone
+      if (x < xRight / 2) { // check if its in the lower right side of the dead zone
+        // crab right
+        setRobotDirection(ROBOT_CRAB_RIGHT, speed);
+      } else {
+        // forward diag right towards the ball into the dead zone
+        setRobotDirection(ROBOT_STRAFE_RIGHT, speed);
+      }
     }
 
+    // if the ball is in the centre deadzone
+    if (x > xLeft && x < xRight) {
+      // before moving forward, amybe check if the robot has the correct heading and has the ball with the TOF sensor.
+      setRobotDirection(ROBOT_FORWARD, speed);
+    }
   } else {
-    Serial.println("go straight");
-    setRobotDirection(ROBOT_FORWARD, speed);
-    // ball should be in the centre of the dead zone pixels,
-    // so the robot should be able to move straight.
+    setRobotDirection(ROBOT_STOP, speed);
+    return false;
   }
 }
 
@@ -373,32 +387,12 @@ void threadRunner() {
 
   float compassHeading = getCompassHeading();
 
-  if (pixyBlocks) {
-    frameCount++;
-    cameraWatchDogCount = 0;
-  } else {
-    cameraWatchDogCount++;
-  }
-
-  // wait for %frameskip frames
-  if (frameCount % FRAME_SKIP == 0) {
-    if (pixyBlocks == 2) { // goal or ball.
-      handleRobotMovement(speed);
-      frameCount = 1;
-    } else {
-      frameCount = 1;
-      setRobotDirection(ROBOT_STOP, speed);
-    }
+  if (!handleRobotMovement(speed, pixyBlocks)) {
+      cameraWatchDogCount ++;
   }
 
   if (cameraWatchDogCount == cameraWatchDogCountMax) {
     Serial.println("Pixy has no blocks !");
-
-    // do rf communication to the other robot here.
-
-    // stop the robot or move backward slowly.
-    // possibly turn around to locate the ball and then rotate back and go to it,
-    // by setting an 'imaginary' averageX() value that the robot can head to.
   }
 }
 
@@ -443,12 +437,12 @@ void cbRFTransmit() {
   // txPacket.orientation = readOrientation()
   // txPacket.ballVisible = canPixySeeBall()
   // txPacket.hasBall = doIOwnTheBall()
-  radio.write( &txPacket, sizeof(txPacket) );
+  radio.write(&txPacket, sizeof(txPacket));
   radio.startListening();
 }
 
 void cbRFReceive() {
-  radio.read( &rxPacket, sizeof(rxPacket) );
+  radio.read(&rxPacket, sizeof(rxPacket));
   //Serial.println(rxPacket.robotIsMaster);
 };
 
@@ -492,13 +486,6 @@ void setup() {
   Wire.begin();
 
   display.begin();
-  //display.backlight();
-  display.blink();
-
-
-  //// set up hardware
-
-  // init core devices
   pixy.init();
   timeOfFlight.begin();
   compass.init();
@@ -507,7 +494,6 @@ void setup() {
   initMotorPwmConfig(pwms);
   initMotorConfig(motors);
   initCBRF(); // Initialize Radios, dependant on ROBOT_IS_MASTER constant
-
 
   if (!timeOfFlight.begin()) { // only complain if its not working.
     Serial.println(F("Failed to boot VL53L0X"));
@@ -520,11 +506,9 @@ void setup() {
 /////////////////////////////////////////////LOOP/////////////////////////////////////////////
 void loop() {
     display.print(getCompassHeading());
-    delay(50);
-    display.clear();
-    //Serial.println("updating");
-  // run the thread
-//  threadRunner();
+
+// run the thread
+  threadRunner();
 
   // run the radio functions and listen/transmit data
   //cbRFThread();
